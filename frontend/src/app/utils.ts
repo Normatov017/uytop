@@ -60,7 +60,7 @@ export function toListing(property: ApiProperty): Listing {
     owner: {
       name: property.owner.full_name,
       phone: property.owner.phone,
-      telegram: "",
+      telegram: property.owner.telegram ?? "",
     },
   };
 }

@@ -10,6 +10,7 @@ class UserBase(BaseModel):
     phone: str
     email: str = ""
     role: UserRole = UserRole.USER
+    telegram: str = ""
     region: str = ""
     district: str = ""
 

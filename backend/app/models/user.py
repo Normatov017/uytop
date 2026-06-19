@@ -17,6 +17,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.USER, index=True)
     is_active: Mapped[bool] = mapped_column(default=True)
+    telegram: Mapped[str] = mapped_column(String(100), default="")
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     documents: Mapped[list[str]] = mapped_column(JSON, default=list)
     region: Mapped[str | None] = mapped_column(String(100), nullable=True)

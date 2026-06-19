@@ -9,7 +9,7 @@ import type { ApiUser, PropertyInsight } from "../../lib/types";
 import { addRecentlyViewed } from "../../lib/storage";
 import { VerifiedBadge, StatusBadge } from "../components/Badges";
 import PropertyCard from "../components/PropertyCard";
-import { osmEmbedUrl, osmOpenUrl } from "../utils";
+import { osmEmbedUrl, osmOpenUrl, toListing } from "../utils";
 import { t } from "../../lib/i18n";
 
 function DetailPage({
@@ -63,7 +63,6 @@ function DetailPage({
     setInsight(null);
     api.propertyInsights(listing.id).then(setInsight).catch(() => undefined);
     api.similarProperties(listing.id).then(async (props) => {
-      const { toListing } = await import("../utils");
       setSimilar(props.map(toListing));
     }).catch(() => undefined);
     api.priceHistory(listing.id).then(setPriceHistory).catch(() => undefined);
