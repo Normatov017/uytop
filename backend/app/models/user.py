@@ -20,8 +20,8 @@ class User(Base):
     telegram: Mapped[str] = mapped_column(String(100), default="")
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     documents: Mapped[list[str]] = mapped_column(JSON, default=list)
-    region: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    district: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    region: Mapped[str] = mapped_column(String(100), default="", server_default="")
+    district: Mapped[str] = mapped_column(String(100), default="", server_default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     properties = relationship("Property", back_populates="owner", cascade="all, delete-orphan")
