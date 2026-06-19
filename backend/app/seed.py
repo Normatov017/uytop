@@ -47,7 +47,7 @@ SEED_PROPERTIES = [
     {
         "title": "2 xonali kvartira, Yunusobod",
         "price": Decimal("72000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Yunusobod",
         "rooms": 2,
         "area_m2": 58,
@@ -65,7 +65,7 @@ SEED_PROPERTIES = [
     {
         "title": "3 xonali kvartira, Chilonzor",
         "price": Decimal("89000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Chilonzor",
         "rooms": 3,
         "area_m2": 76,
@@ -83,7 +83,7 @@ SEED_PROPERTIES = [
     {
         "title": "Tijoriy maydon, Yakkasaroy",
         "price": Decimal("2500"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Yakkasaroy",
         "rooms": 0,
         "area_m2": 140,
@@ -102,7 +102,7 @@ SEED_PROPERTIES = [
     {
         "title": "1 xonali kvartira, Mirzo Ulugbek",
         "price": Decimal("45000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Mirzo Ulugbek",
         "rooms": 1,
         "area_m2": 34,
@@ -120,7 +120,7 @@ SEED_PROPERTIES = [
     {
         "title": "Xususiy uy, Sergeli",
         "price": Decimal("120000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Sergeli",
         "rooms": 5,
         "area_m2": 200,
@@ -138,7 +138,7 @@ SEED_PROPERTIES = [
     {
         "title": "Yangi bino 2 xonali, Mirobod",
         "price": Decimal("95000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Mirobod",
         "rooms": 2,
         "area_m2": 65,
@@ -156,7 +156,7 @@ SEED_PROPERTIES = [
     {
         "title": "3 xonali kvartira, Olmazor",
         "price": Decimal("78000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Olmazor",
         "rooms": 3,
         "area_m2": 68,
@@ -174,7 +174,7 @@ SEED_PROPERTIES = [
     {
         "title": "Ijara 1 xonali, Chilonzor",
         "price": Decimal("350"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Chilonzor",
         "rooms": 1,
         "area_m2": 30,
@@ -193,7 +193,7 @@ SEED_PROPERTIES = [
     {
         "title": "Yer maydoni, Bektemir",
         "price": Decimal("55000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Bektemir",
         "rooms": 0,
         "area_m2": 600,
@@ -211,7 +211,7 @@ SEED_PROPERTIES = [
     {
         "title": "Studiya kvartira, Yashnobod",
         "price": Decimal("35000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Yashnobod",
         "rooms": 1,
         "area_m2": 28,
@@ -229,7 +229,7 @@ SEED_PROPERTIES = [
     {
         "title": "4 xonali kvartira, Yunusobod",
         "price": Decimal("135000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Yunusobod",
         "rooms": 4,
         "area_m2": 96,
@@ -247,7 +247,7 @@ SEED_PROPERTIES = [
     {
         "title": "Tijoriy maydon, Chilonzor",
         "price": Decimal("1800"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Chilonzor",
         "rooms": 0,
         "area_m2": 85,
@@ -266,7 +266,7 @@ SEED_PROPERTIES = [
     {
         "title": "Yangi bino, Yakkasaroy",
         "price": Decimal("115000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Yakkasaroy",
         "rooms": 3,
         "area_m2": 82,
@@ -284,7 +284,7 @@ SEED_PROPERTIES = [
     {
         "title": "Xususiy uy, Olmazor",
         "price": Decimal("180000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Olmazor",
         "rooms": 6,
         "area_m2": 350,
@@ -302,7 +302,7 @@ SEED_PROPERTIES = [
     {
         "title": "Ijara 2 xonali, Mirobod",
         "price": Decimal("500"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Mirobod",
         "rooms": 2,
         "area_m2": 55,
@@ -321,7 +321,7 @@ SEED_PROPERTIES = [
     {
         "title": "Yer maydoni, Sergeli",
         "price": Decimal("45000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Sergeli",
         "rooms": 0,
         "area_m2": 800,
@@ -339,7 +339,7 @@ SEED_PROPERTIES = [
     {
         "title": "2 xonali kvartira, Uchtepa",
         "price": Decimal("62000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Uchtepa",
         "rooms": 2,
         "area_m2": 50,
@@ -357,7 +357,7 @@ SEED_PROPERTIES = [
     {
         "title": "Yangi bino 3 xonali, Mirzo Ulugbek",
         "price": Decimal("140000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Mirzo Ulugbek",
         "rooms": 3,
         "area_m2": 90,
@@ -375,7 +375,7 @@ SEED_PROPERTIES = [
     {
         "title": "Studio, Shayxontohur",
         "price": Decimal("28000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Shayxontohur",
         "rooms": 1,
         "area_m2": 25,
@@ -393,7 +393,7 @@ SEED_PROPERTIES = [
     {
         "title": "Xususiy uy, Bektemir",
         "price": Decimal("95000"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Bektemir",
         "rooms": 4,
         "area_m2": 180,
@@ -411,7 +411,7 @@ SEED_PROPERTIES = [
     {
         "title": "Ijara 3 xonali, Yashnobod",
         "price": Decimal("600"),
-        "region": "Toshkent",
+        "city": "Toshkent",
         "district": "Yashnobod",
         "rooms": 3,
         "area_m2": 70,
