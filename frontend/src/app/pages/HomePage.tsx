@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search, ChevronDown, MapPin, ArrowRight, Shield, Map,
-  MessageCircle, Home, Layers, Building, Clock, Star } from "lucide-react";
+  MessageCircle, Home, Layers, Building, Clock, Star, CheckCircle } from "lucide-react";
 import type { Listing, Page } from "../types";
 import PropertyCard from "../components/PropertyCard";
 import { osmOpenUrl } from "../utils";

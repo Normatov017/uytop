@@ -19,6 +19,7 @@ function DetailPage({
   favorites,
   toggleFav,
   currentUser,
+  viewOwnerListings,
 }: {
   listing: Listing;
   listings: Listing[];
@@ -26,6 +27,7 @@ function DetailPage({
   favorites: number[];
   toggleFav: (id: number) => void;
   currentUser: ApiUser | null;
+  viewOwnerListings?: (ownerId: number) => void;
 }) {
   const [activeImg, setActiveImg] = useState(0);
   const [insight, setInsight] = useState<PropertyInsight | null>(null);
@@ -39,6 +41,10 @@ function DetailPage({
   const [viewingTime, setViewingTime] = useState("");
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
+  const [showTargetPrice, setShowTargetPrice] = useState(false);
+  const [targetPrice, setTargetPrice] = useState("");
+  const [existingAlerts, setExistingAlerts] = useState<any[]>([]);
+  const [districtRatingData, setDistrictRatingData] = useState<any>(null);
   const gallery = listing.images.length > 0 ? listing.images : [listing.image];
   const amenityMap: Record<string, string> = {
     lift: "Lift",
@@ -49,6 +55,8 @@ function DetailPage({
     ac: "Konditsioner",
   };
   const isFav = favorites.includes(listing.id);
+
+  const alreadyWatching = existingAlerts.some((a: any) => a.property_id === listing.id);
 
   useEffect(() => {
     addRecentlyViewed(listing.id);
@@ -62,6 +70,10 @@ function DetailPage({
     if (listing.ownerId) {
       api.agentRatingSummary(listing.ownerId).then(setAgentRating).catch(() => undefined);
     }
+    if (listing.district) {
+      api.districtRating(listing.district).then(setDistrictRatingData).catch(() => undefined);
+    }
+    api.alerts().then(setExistingAlerts).catch(() => undefined);
   }, [listing.id]);
 
   const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/listing/${listing.id}` : "";
@@ -360,20 +372,29 @@ function DetailPage({
             {/* Neighborhood Reviews */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5" id="reviews">
               <h2 className="font-bold text-gray-900 mb-4">🏘️ Mahalla reytingi</h2>
-              <div className="flex items-center gap-3 mb-4">
-                {["Xavfsizlik", "Infratuzilma", "Transport"].map((label, i) => {
-                  const rating = Math.floor(Math.random() * 3) + 6;
-                  return (
-                    <div key={label} className="flex-1 text-center bg-gray-50 rounded-xl p-3">
-                      <div className="text-[18px] font-extrabold text-green-600">{rating}/10</div>
-                      <div className="text-[10px] text-gray-400">{label}</div>
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-gray-400">
-                Ma'lumotlar foydalanuvchi sharhlari asosida shakllantiriladi.
-              </p>
+              {districtRatingData ? (
+                <>
+                  <div className="flex items-center gap-3 mb-4">
+                    {[
+                      { label: "Xavfsizlik", value: Math.round(districtRatingData.avg_safety) },
+                      { label: "Infratuzilma", value: Math.round(districtRatingData.avg_infrastructure) },
+                      { label: "Transport", value: Math.round(districtRatingData.avg_transport) },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex-1 text-center bg-gray-50 rounded-xl p-3">
+                        <div className="text-[18px] font-extrabold text-green-600">{value}/10</div>
+                        <div className="text-[10px] text-gray-400">{label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    {districtRatingData.review_count > 0
+                      ? `${districtRatingData.review_count} ta sharh asosida`
+                      : "Ma'lumotlar foydalanuvchi sharhlari asosida shakllantiriladi."}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-gray-400">Yuklanmoqda...</p>
+              )}
             </div>
 
             {/* Map preview */}
@@ -416,11 +437,31 @@ function DetailPage({
                     {listing.owner.name[0]}
                   </div>
                   <div className="flex-1">
-                    <div className="font-bold text-gray-900">{listing.owner.name}</div>
-                    <div className="text-xs text-gray-400">Mulk egasi</div>
+                    <button onClick={() => { if (listing.ownerId) onNav("agent", listing.ownerId); }}
+                      className="font-bold text-gray-900 hover:text-green-600 transition-colors text-left">{listing.owner.name}</button>
+                    <div className="text-xs text-gray-400">Rieltor</div>
+                    {agentRating && agentRating.total_reviews > 0 && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <div className="text-xs font-bold text-gray-900">{agentRating.avg_rating}</div>
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map(i => (
+                            <Star key={i} size={10} className={i <= Math.round(agentRating.avg_rating) ? "text-amber-400 fill-amber-400" : "text-gray-200"} />
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-gray-400">({agentRating.total_reviews})</span>
+                      </div>
+                    )}
                   </div>
                   {listing.verified && <CheckCircle size={18} className="text-green-500 shrink-0" />}
                 </div>
+                {listing.ownerId && viewOwnerListings && (
+                  <button
+                    onClick={() => viewOwnerListings(listing.ownerId)}
+                    className="w-full text-center text-xs font-semibold text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 py-2.5 rounded-xl transition-colors mb-3"
+                  >
+                    Barcha e'lonlarni ko'rish ({listings.filter(l => l.ownerId === listing.ownerId).length})
+                  </button>
+                )}
 
                 <div className="space-y-2.5">
                   <a
@@ -431,11 +472,20 @@ function DetailPage({
                     <Phone size={15} /> {listing.owner.phone}
                   </a>
                   <a
-                    href="#"
-                    onClick={() => api.trackContact(listing.id, "telegram").catch(() => undefined)}
-                    className="flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 rounded-xl transition-colors text-sm"
+                    href={listing.owner.telegram ? `https://t.me/${listing.owner.telegram.replace(/^@/, "")}` : "#"}
+                    target={listing.owner.telegram ? "_blank" : undefined}
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (!listing.owner.telegram) e.preventDefault();
+                      api.trackContact(listing.id, "telegram").catch(() => undefined);
+                    }}
+                    className={`flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition-colors text-sm ${
+                      listing.owner.telegram
+                        ? "bg-blue-50 hover:bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
                   >
-                    <MessageCircle size={15} /> Telegramda yozish
+                    <MessageCircle size={15} /> {listing.owner.telegram ? "Telegramda yozish" : "Telegram mavjud emas"}
                   </a>
                   {currentUser && currentUser.id !== listing.ownerId ? (
                     <button
@@ -479,20 +529,18 @@ function DetailPage({
                       <Calendar size={15} /> Bron qilish
                     </button>
                   )}
-                  {currentUser && (
+                  {currentUser && !alreadyWatching && (
                     <button
-                      onClick={async () => {
-                        try {
-                          await api.createAlert(listing.id);
-                          alert("Narx kuzatuvga olindi!");
-                        } catch (e: any) {
-                          alert(e.message || "Xatolik");
-                        }
-                      }}
+                      onClick={() => setShowTargetPrice(true)}
                       className="w-full flex items-center justify-center gap-2 border border-gray-200 hover:border-green-400 text-gray-600 font-semibold py-3 rounded-xl transition-colors text-sm"
                     >
                       <Bell size={15} /> Narxni kuzatish
                     </button>
+                  )}
+                  {currentUser && alreadyWatching && (
+                    <div className="w-full flex items-center justify-center gap-2 bg-green-50 text-green-600 font-semibold py-3 rounded-xl text-sm border border-green-200">
+                      <BellOff size={15} /> Kuzatilmoqda
+                    </div>
                   )}
                   {currentUser && currentUser.id === listing.ownerId && (
                     <>
@@ -697,6 +745,32 @@ function DetailPage({
                     alert(err instanceof Error ? err.message : "Xatolik");
                   }
                 }} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl">Yuborish</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Target price modal */}
+        {showTargetPrice && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowTargetPrice(false)}>
+            <div className="bg-white rounded-2xl w-full max-w-sm mx-4 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Narxni kuzatish</h3>
+              <p className="text-xs text-gray-400 mb-4">Maqsadli narxni kiriting (ixtiyoriy)</p>
+              <input type="number" placeholder="Maqsadli narx ($)" value={targetPrice} onChange={e => setTargetPrice(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-4 focus:outline-none focus:border-green-500" />
+              <div className="flex gap-2">
+                <button onClick={() => { setShowTargetPrice(false); setTargetPrice(""); }}
+                  className="flex-1 border border-gray-200 text-gray-600 rounded-lg py-3 text-sm font-semibold hover:bg-gray-50 transition-colors">Bekor qilish</button>
+                <button onClick={async () => {
+                  try {
+                    await api.createAlert(listing.id, targetPrice ? Number(targetPrice) : undefined);
+                    setShowTargetPrice(false); setTargetPrice("");
+                    alert("Narx kuzatuvga olindi!");
+                  } catch (e: any) {
+                    alert(e.message || "Xatolik");
+                  }
+                }}
+                  className="flex-1 bg-green-600 text-white rounded-lg py-3 text-sm font-semibold hover:bg-green-700 transition-colors">Kuzatishni boshlash</button>
               </div>
             </div>
           </div>

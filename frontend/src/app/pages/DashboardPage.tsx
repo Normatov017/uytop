@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Settings, Eye, Edit, Trash2, Heart, Bell, BellOff, TrendingUp, BarChart3, Users, User, Upload, Check, FileText, Bookmark, Search, Trash2 as Trash, ExternalLink, Clock, Star, Target } from "lucide-react";
+import { Plus, Settings, Eye, Edit, Trash2, Heart, Bell, BellOff, TrendingUp, BarChart3, Users, User, Upload, Check, CheckCircle, FileText, Bookmark, Search, Trash2 as Trash, ExternalLink, Clock, Star, Target } from "lucide-react";
 import { api } from "../../lib/api";
 import type { ApiUser } from "../../lib/types";
 import type { Listing, Page } from "../types";
@@ -34,6 +34,7 @@ export default function DashboardPage({
   const [showPrefs, setShowPrefs] = useState(false);
   const [editPrefs, setEditPrefs] = useState<BuyerPreferences>({});
   const recentlyViewed = getRecentlyViewed();
+  const [viewStatsMap, setViewStatsMap] = useState<Record<number, any>>({});
 
   useEffect(() => {
     if (localStorage.getItem(api.tokenKey)) {
@@ -44,6 +45,19 @@ export default function DashboardPage({
       api.myReferralCode().then(r => setReferralCode(r.code)).catch(() => {});
     }
   }, []);
+
+  useEffect(() => {
+    if (tab === "stats") {
+      const fetchStats = async () => {
+        const map: Record<number, any> = {};
+        await Promise.all(myListings.map(async (l) => {
+          try { map[l.id] = await api.viewStats(l.id); } catch {}
+        }));
+        setViewStatsMap(map);
+      };
+      fetchStats();
+    }
+  }, [tab, myListings]);
 
   const removeAlert = async (id: number) => {
     await api.deleteAlert(id);
@@ -364,7 +378,8 @@ export default function DashboardPage({
                             >
                               <Eye size={13} />
                             </button>
-                            <button className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                            <button onClick={() => onNav("detail", l.id)}
+                              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
                               <Edit size={13} />
                             </button>
                             {l.apiStatus !== "sold" && l.apiStatus !== "rented" && (
@@ -472,17 +487,29 @@ export default function DashboardPage({
               <p className="text-sm text-gray-400 text-center py-8">Hali e'lon qo'shmagansiz</p>
             ) : (
               <div className="space-y-3">
-                {myListings.map((l) => (
-                  <div key={l.id} className="bg-white border border-gray-100 rounded-xl p-4">
-                    <div className="flex items-start gap-3">
-                      <img src={l.image} alt="" className="w-16 h-12 rounded-lg object-cover bg-gray-100 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-gray-900 truncate">{l.title}</div>
-                        <div className="text-xs text-gray-400 mt-0.5">{l.views} ko'rish</div>
+                {myListings.map((l) => {
+                  const s = viewStatsMap[l.id];
+                  return (
+                    <div key={l.id} className="bg-white border border-gray-100 rounded-xl p-4">
+                      <div className="flex items-start gap-3">
+                        <img src={l.image} alt="" className="w-16 h-12 rounded-lg object-cover bg-gray-100 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-900 truncate">{l.title}</div>
+                          {s ? (
+                            <div className="flex flex-wrap gap-3 mt-1.5">
+                              <span className="text-xs text-gray-500 flex items-center gap-1"><Eye size={12} /> {s.views_count} ko'rish</span>
+                              <span className="text-xs text-gray-500 flex items-center gap-1"><Users size={12} /> {s.unique_viewers} noyob</span>
+                              <span className="text-xs text-gray-500">{s.phone_clicks} qo'ng'iroq</span>
+                              <span className="text-xs text-gray-500">{s.telegram_clicks} telegram</span>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-gray-400 mt-0.5">{l.views} ko'rish</div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -579,6 +606,14 @@ export default function DashboardPage({
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
+                        <button onClick={() => {
+                          localStorage.setItem("uymap_applied_filters", JSON.stringify(s.filters || {}));
+                          onNav("listings");
+                        }}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          title="Qo'llash">
+                          <Search size={13} />
+                        </button>
                         <button onClick={() => { setSavedSearches(prev => prev.filter((x: any) => x.id !== s.id)); api.deleteSavedSearch(s.id).catch(() => {}); }}
                           className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors">
                           <Trash size={13} />

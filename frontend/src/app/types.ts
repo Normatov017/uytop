@@ -1,6 +1,6 @@
 import type { ApiProperty, UserRole } from "../lib/types";
 
-export type Page = "home" | "listings" | "map" | "detail" | "add" | "login" | "register" | "dashboard" | "admin" | "calculator" | "chat" | "roi" | "developer" | "bookings" | "avm" | "education" | "public-buildings" | "compare" | "analytics" | "boost" | "crm" | "viewings";
+export type Page = "home" | "listings" | "map" | "detail" | "add" | "login" | "register" | "dashboard" | "admin" | "calculator" | "chat" | "roi" | "developer" | "bookings" | "avm" | "education" | "public-buildings" | "compare" | "analytics" | "boost" | "crm" | "viewings" | "agent" | "wanted";
 
 export interface Listing {
   id: number;

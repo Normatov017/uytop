@@ -11,12 +11,16 @@ function Header({
   currentUser,
   onLogout,
   unreadCount = 0,
+  dark,
+  toggleDark,
 }: {
   onNav: (p: Page) => void;
   currentPage: Page;
   currentUser: ApiUser | null;
   onLogout: () => void;
   unreadCount?: number;
+  dark?: boolean;
+  toggleDark?: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -31,6 +35,7 @@ function Header({
     { page: "listings" as Page, label: "Sotuv" },
     { page: "listings" as Page, label: "Ijara" },
     { page: "public-buildings" as Page, label: "Yangi qurilish" },
+    { page: "wanted" as Page, label: "Men qidiryapman" },
     { page: "map" as Page, label: "Xarita", icon: <Map size={13} /> },
     { page: "analytics" as Page, label: "Analitika", icon: <BarChart3 size={13} /> },
   ];
@@ -82,6 +87,11 @@ function Header({
             <Plus size={14} /> E'lon berish
           </button>
           <LangSwitcher />
+          {toggleDark && (
+            <button onClick={toggleDark} className="p-2 text-gray-400 hover:text-amber-500 transition-colors" title={dark ? "Yorug' rejim" : "Tungi rejim"}>
+              {dark ? <span className="text-sm">☀️</span> : <span className="text-sm">🌙</span>}
+            </button>
+          )}
           {currentUser ? (
             <div className="flex items-center gap-1">
               {currentUser.role === "ADMIN" && (
@@ -138,7 +148,10 @@ function Header({
                 placeholder="Shahar, tuman yoki manzil..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                onFocus={() => onNav("listings")}
+                onFocus={() => {
+                  localStorage.setItem("uymap_header_search", searchText);
+                  onNav("listings");
+                }}
                 className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-green-500 bg-white transition-all"
               />
             </div>

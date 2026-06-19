@@ -54,6 +54,7 @@ function AddListingPage({
     uy: "house",
     yer: "land",
     tijoriy: "commercial",
+    yangi_bino: "new_building",
   };
   const ownerTypeMap: Record<string, PropertyCreatePayload["owner_type"]> = {
     user: "owner",
@@ -240,6 +241,7 @@ function AddListingPage({
                 {[
                   { v: "kvartira", label: "Kvartira", icon: Building },
                   { v: "uy", label: "Uy", icon: Home },
+                  { v: "yangi_bino", label: "Yangi bino", icon: Shield },
                   { v: "yer", label: "Yer", icon: Layers },
                   { v: "tijoriy", label: "Tijoriy obyekt", icon: BarChart2 },
                 ].map(({ v, label, icon: Icon }) => (
