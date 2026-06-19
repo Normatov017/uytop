@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { Building2, MapPin, Home, Ruler, CheckCircle, X, Search, ChevronLeft, Image as ImageIcon, Phone, MessageCircle, DollarSign, Calendar, Shield, Users, Layers, Star, FileText } from "lucide-react";
+import { Building2, MapPin, Home, Ruler, CheckCircle, X, Search, ChevronLeft, Image as ImageIcon, Phone, MessageCircle, DollarSign, Calendar, Shield, Users, Layers, Star, FileText, ChevronDown } from "lucide-react";
 import { api } from "../../lib/api";
 import type { Page } from "../types";
+import { REGIONS } from "../types";
 import { t } from "../../lib/i18n";
 import { MOCK_BUILDINGS } from "../data/mockData";
-
-const districts = ["Barchasi", "Yunusobod", "Chilonzor", "Mirzo Ulug'bek", "Yakkasaroy", "Sergeli", "Olmazor", "Uchtepa", "Bektemir", "Mirobod", "Shayxontohur"];
 
 export default function PublicBuildingsPage({ onNav }: { onNav: (p: Page) => void }) {
   const [buildings, setBuildings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [region, setRegion] = useState("");
   const [district, setDistrict] = useState("");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detail, setDetail] = useState<any>(null);
@@ -49,7 +49,13 @@ export default function PublicBuildingsPage({ onNav }: { onNav: (p: Page) => voi
 
   const filterDistrict = (d: string) => {
     setDistrict(d);
-    load(d === "Barchasi" ? "" : d);
+    load(d || "");
+  };
+
+  const filterRegion = (r: string) => {
+    setRegion(r);
+    setDistrict("");
+    load("");
   };
 
   const closeDetail = () => {
@@ -82,14 +88,31 @@ export default function PublicBuildingsPage({ onNav }: { onNav: (p: Page) => voi
             </div>
           </div>
 
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-            {districts.map(d => (
-              <button key={d} onClick={() => filterDistrict(d)}
+          {/* Region filter */}
+          <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+            <button onClick={() => filterRegion("")}
+              className={`shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+                !region ? "bg-green-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-green-300"
+              }`}>Barchasi</button>
+            {Object.keys(REGIONS).map(r => (
+              <button key={r} onClick={() => filterRegion(r)}
                 className={`shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
-                  (district === d || (!district && d === "Barchasi")) ? "bg-green-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-green-300"
-                }`}>{d}</button>
+                  region === r ? "bg-green-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-green-300"
+                }`}>{r}</button>
             ))}
           </div>
+
+          {/* District filter */}
+          {region && REGIONS[region] && (
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+              {REGIONS[region].map(d => (
+                <button key={d} onClick={() => filterDistrict(d)}
+                  className={`shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+                    district === d ? "bg-green-600 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-green-300"
+                  }`}>{d}</button>
+              ))}
+            </div>
+          )}
 
           {loading ? (
             <div className="flex justify-center py-20">
