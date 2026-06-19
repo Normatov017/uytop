@@ -31,15 +31,154 @@ OWNERS = [
     },
     {
         "full_name": "Nilufar Abdullayeva",
-        "phone": "+998909991122",
+        "phone": "+998909975544",
         "email": "nilufar@mail.uz",
         "telegram": "nilufar_a",
     },
     {
         "full_name": "Bobur Xasanov",
-        "phone": "+998998880011",
+        "phone": "+998998860011",
         "email": "bobur@mail.uz",
         "telegram": "",
+    },
+]
+
+DEVELOPERS = [
+    {
+        "full_name": "Murad Buildings",
+        "phone": "+998712001010",
+        "email": "info@murad-buildings.uz",
+        "telegram": "murad_buildings",
+    },
+    {
+        "full_name": "Toshkent Qurilish Invest",
+        "phone": "+998712002020",
+        "email": "info@toshqur.uz",
+        "telegram": "toshqur",
+    },
+    {
+        "full_name": "Yangi Hayot Kompaniyasi",
+        "phone": "+998712003030",
+        "email": "info@yangihayot.uz",
+        "telegram": "yangihayot",
+    },
+    {
+        "full_name": "Grand Stroy Group",
+        "phone": "+998712004040",
+        "email": "info@grandstroy.uz",
+        "telegram": "",
+    },
+]
+
+DEVELOPER_PROPERTIES = [
+    {
+        "title": "Yangi bino, Grand Residence, Yunusobod",
+        "price": Decimal("135000"),
+        "city": "Toshkent",
+        "district": "Yunusobod",
+        "rooms": 3,
+        "area_m2": 85,
+        "floor": 6,
+        "total_floors": 18,
+        "property_type": PropertyType.new_building,
+        "repair_type": "Qora quti",
+        "operation_type": OperationType.sale,
+        "latitude": 41.35,
+        "longitude": 69.31,
+        "views_count": 1560,
+        "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=400&fit=crop&auto=format",
+        "amenities": ["lift", "parkovka", "metro_yaqin", "maktab_yaqin", "bolalar_maydoni", "24_7_qoriklash", "konditsioner", "balkon"],
+    },
+    {
+        "title": "Ko'p qavatli uy, 2 xonali, Chilonzor",
+        "price": Decimal("82000"),
+        "city": "Toshkent",
+        "district": "Chilonzor",
+        "rooms": 2,
+        "area_m2": 60,
+        "floor": 4,
+        "total_floors": 12,
+        "property_type": PropertyType.new_building,
+        "repair_type": "Yaxshi remont",
+        "operation_type": OperationType.sale,
+        "latitude": 41.28,
+        "longitude": 69.21,
+        "views_count": 890,
+        "image": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=400&fit=crop&auto=format",
+        "amenities": ["lift", "parkovka", "bolalar_maydoni", "balkon"],
+    },
+    {
+        "title": "Premium turar-joy, Mirobod",
+        "price": Decimal("250000"),
+        "city": "Toshkent",
+        "district": "Mirobod",
+        "rooms": 4,
+        "area_m2": 120,
+        "floor": 12,
+        "total_floors": 20,
+        "property_type": PropertyType.new_building,
+        "repair_type": "Evroremont",
+        "operation_type": OperationType.sale,
+        "latitude": 41.31,
+        "longitude": 69.29,
+        "views_count": 2340,
+        "image": "https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=600&h=400&fit=crop&auto=format",
+        "amenities": ["lift", "parkovka", "metro_yaqin", "24_7_qoriklash", "konditsioner", "balkon", "bolalar_maydoni"],
+    },
+    {
+        "title": "Yangi turar-joy majmuasi, Sergeli",
+        "price": Decimal("65000"),
+        "city": "Toshkent",
+        "district": "Sergeli",
+        "rooms": 2,
+        "area_m2": 55,
+        "floor": 3,
+        "total_floors": 9,
+        "property_type": PropertyType.new_building,
+        "repair_type": "Qora quti",
+        "operation_type": OperationType.sale,
+        "latitude": 41.25,
+        "longitude": 69.23,
+        "views_count": 670,
+        "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=400&fit=crop&auto=format",
+        "amenities": ["lift", "parkovka", "maktab_yaqin"],
+    },
+    {
+        "title": "Biznes markaz ofisi, Yakkasaroy",
+        "price": Decimal("3500"),
+        "city": "Toshkent",
+        "district": "Yakkasaroy",
+        "rooms": 0,
+        "area_m2": 200,
+        "floor": 5,
+        "total_floors": 10,
+        "property_type": PropertyType.commercial,
+        "repair_type": "Ofis remont",
+        "operation_type": OperationType.rent,
+        "price_period": PricePeriod.month,
+        "latitude": 41.30,
+        "longitude": 69.27,
+        "views_count": 430,
+        "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop&auto=format",
+        "amenities": ["parkovka", "konditsioner", "lift"],
+    },
+    {
+        "title": "Xususiy uy-joy, Olmazor",
+        "price": Decimal("175000"),
+        "city": "Toshkent",
+        "district": "Olmazor",
+        "rooms": 5,
+        "area_m2": 280,
+        "floor": 1,
+        "total_floors": 2,
+        "property_type": PropertyType.house,
+        "repair_type": "Kapital remont",
+        "operation_type": OperationType.sale,
+        "latitude": 41.26,
+        "longitude": 69.19,
+        "views_count": 310,
+        "image": "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=600&h=400&fit=crop&auto=format",
+        "amenities": ["parkovka", "bolalar_maydoni", "maktab_yaqin", "balkon"],
     },
 ]
 
@@ -445,7 +584,6 @@ def seed() -> None:
         )
         db.add(admin)
         db.flush()
-
         owners = []
         for o in OWNERS:
             user = User(
@@ -465,11 +603,28 @@ def seed() -> None:
             owners.append(user)
         db.flush()
 
+        developers = []
+        for d in DEVELOPERS:
+            user = User(
+                full_name=d["full_name"],
+                phone=d["phone"],
+                email=d["email"],
+                telegram=d["telegram"],
+                region="Toshkent",
+                district="",
+                role=UserRole.DEVELOPER,
+                hashed_password=get_password_hash("owner12345"),
+            )
+            db.add(user)
+            developers.append(user)
+        db.flush()
+
         for idx, item in enumerate(SEED_PROPERTIES):
             image = item.pop("image")
             owner = owners[idx % len(owners)]
             is_premium = idx % 3 != 0
             is_verified = idx % 5 != 1
+
             prop = Property(
                 **item,
                 description="UyMap.uz orqali joylangan tekshirilgan e'lon. Barcha asosiy qulayliklar va aloqa ma'lumotlari mavjud.",
@@ -484,10 +639,31 @@ def seed() -> None:
             db.flush()
             db.add(PropertyImage(property_id=prop.id, url=image, is_main=True, sort_order=0))
 
+        for idx, item in enumerate(DEVELOPER_PROPERTIES):
+            image = item.pop("image")
+            dev = developers[idx % len(developers)]
+            is_premium = True
+            is_verified = True
+
+            prop = Property(
+                **item,
+                description=f"{dev.full_name} kompaniyasi tomonidan qurilgan yangi turar-joy majmuasi. Barcha zamonaviy qulayliklar mavjud. Ipoteka va bo'lib to'lash imkoniyati bor.",
+                currency=Currency.USD,
+                owner_type=OwnerType.developer,
+                status=PropertyStatus.active,
+                is_verified=is_verified,
+                is_premium=is_premium,
+                owner_id=dev.id,
+            )
+            db.add(prop)
+            db.flush()
+            db.add(PropertyImage(property_id=prop.id, url=image, is_main=True, sort_order=0))
+
         db.commit()
-        print(f"Seed data created: {len(SEED_PROPERTIES)} properties, {len(OWNERS)} owners, 1 admin")
+        print(f"Seed data created: {len(SEED_PROPERTIES)} properties, {len(DEVELOPER_PROPERTIES)} developer properties, {len(OWNERS)} owners, {len(DEVELOPERS)} developers, 1 admin")
         print("Admin: admin@uymap.uz / admin12345")
-        print("Owners: alisher@mail.uz, malika@mail.uz, jahon@mail.uz, nilufar@mail.uz, bobur@mail.uz / owner12345")
+        print(f"Owners: {', '.join(o['email'] for o in OWNERS)} / owner12345")
+        print(f"Developers: {', '.join(d['email'] for d in DEVELOPERS)} / owner12345")
     finally:
         db.close()
 
