@@ -77,14 +77,15 @@ def district_analytics(district: str, db: DbSession):
     ).filter(active, Property.district == district).first()
 
     twelve_months_ago = datetime.now(timezone.utc) - timedelta(days=365)
+    month_col = func.date_trunc("month", Property.created_at).label("month")
     trends = db.query(
-        func.date_trunc("month", Property.created_at).label("month"),
+        month_col,
         func.avg(Property.price).label("avg_p"),
     ).filter(
         active,
         Property.district == district,
         Property.created_at >= twelve_months_ago,
-    ).group_by(func.date_trunc("month", Property.created_at)).order_by(func.date_trunc("month", Property.created_at)).all()
+    ).group_by(month_col).order_by(month_col).all()
 
     price_trends = [
         PriceTrend(month=r.month.strftime("%Y-%m"), avg_price=float(r.avg_p) if r.avg_p else None)
@@ -103,13 +104,14 @@ def district_analytics(district: str, db: DbSession):
 @router.get("/price-trends", response_model=list[PriceTrend])
 def price_trends(db: DbSession):
     twelve_months_ago = datetime.now(timezone.utc) - timedelta(days=365)
+    month_col = func.date_trunc("month", Property.created_at).label("month")
     rows = db.query(
-        func.date_trunc("month", Property.created_at).label("month"),
+        month_col,
         func.avg(Property.price).label("avg_p"),
     ).filter(
         Property.status == PropertyStatus.active,
         Property.created_at >= twelve_months_ago,
-    ).group_by(func.date_trunc("month", Property.created_at)).order_by(func.date_trunc("month", Property.created_at)).all()
+    ).group_by(month_col).order_by(month_col).all()
 
     return [
         PriceTrend(month=r.month.strftime("%Y-%m"), avg_price=float(r.avg_p) if r.avg_p else None)
