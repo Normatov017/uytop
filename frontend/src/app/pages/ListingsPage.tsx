@@ -60,7 +60,7 @@ function ListingsPage({
   const [maxArea, setMaxArea] = useState("");
   const [showSidebar, setShowSidebar] = useState(false);
   const [pageNum, setPageNum] = useState(1);
-  const perPage = 25;
+  const perPage = 12;
 
   useEffect(() => { setPageNum(1); }, [searchText, selectedRegion, filterDistrict, filterStatus, minPrice, maxPrice, roomsFilter, filterMetro, verifiedOnly, filterType, facilities, minArea, maxArea]);
 
