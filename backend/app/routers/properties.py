@@ -51,7 +51,7 @@ def list_properties(
     search: str | None = None,
     sort: str = Query("newest", pattern="^(newest|cheapest|expensive|popular)$"),
     page: int = Query(1, ge=1),
-    limit: int = Query(12, ge=1, le=100),
+    limit: int = Query(25, ge=1, le=100),
 ) -> PropertyListResponse:
     filters = locals()
     stmt = apply_property_filters(public_active_query(), filters)
