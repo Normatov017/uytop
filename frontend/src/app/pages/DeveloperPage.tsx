@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Building2, Plus, Layers, X, Check, Upload, FileText, Shield, MapPin, Home, Image as ImageIcon, Loader } from "lucide-react";
+import { Building2, Plus, Layers, X, Check, Upload, FileText, Shield, MapPin, Home, Image as ImageIcon, Loader, ChevronDown } from "lucide-react";
 import { api } from "../../lib/api";
 import type { Page } from "../types";
+import { REGIONS } from "../types";
 import { t } from "../../lib/i18n";
 import { MOCK_BUILDINGS } from "../data/mockData";
 
@@ -25,7 +26,6 @@ const statusColors: Record<string, string> = {
   sold: "bg-gray-200 text-gray-500",
 };
 
-const districts = ["Yunusobod", "Chilonzor", "Mirzo Ulug'bek", "Yakkasaroy", "Sergeli", "Olmazor", "Uchtepa", "Bektemir", "Mirobod", "Shayxontohur"];
 const propertyTypes = [
   { value: "apartment", label: "Kvartira" },
   { value: "house", label: "Uy" },
@@ -42,6 +42,7 @@ export default function DeveloperPage({ onNav }: { onNav: (p: Page) => void }) {
   const [showAdd, setShowAdd] = useState(false);
   const [showAddApt, setShowAddApt] = useState<number | null>(null);
   const [step, setStep] = useState(1);
+  const [region, setRegion] = useState("Toshkent shahri");
 
   // Company form
   const [company, setCompany] = useState({
@@ -55,7 +56,7 @@ export default function DeveloperPage({ onNav }: { onNav: (p: Page) => void }) {
   const [form, setForm] = useState({
     name: "", description: "", district: "", city: "Toshkent",
     address: "", total_floors: 5, total_apartments: 0,
-    property_type: "apartment", building_material: "", parking_type: "",
+    property_type: "apartment", segment: "", building_material: "", parking_type: "",
     elevator_count: 0, images: [] as string[], amenities: [] as string[],
     completion_date: "",
   });
@@ -136,7 +137,7 @@ export default function DeveloperPage({ onNav }: { onNav: (p: Page) => void }) {
     await api.createBuilding(form);
     setShowAdd(false);
     setStep(1);
-    setForm({ name: "", description: "", district: "", city: "Toshkent", address: "", total_floors: 5, total_apartments: 0, property_type: "apartment", building_material: "", parking_type: "", elevator_count: 0, images: [], amenities: [], completion_date: "" });
+    setForm({ name: "", description: "", district: "", city: "Toshkent", address: "", total_floors: 5, total_apartments: 0, property_type: "apartment", segment: "", building_material: "", parking_type: "", elevator_count: 0, images: [], amenities: [], completion_date: "" });
     loadBuildings();
   };
 
@@ -441,11 +442,21 @@ export default function DeveloperPage({ onNav }: { onNav: (p: Page) => void }) {
                     <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500 min-h-[80px]" placeholder="Qurilish haqida batafsil ma'lumot..." />
                   </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block font-medium">Viloyat</label>
+                    <div className="relative">
+                      <select value={region} onChange={(e) => { setRegion(e.target.value); setForm(f => ({ ...f, district: "" })); }}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500 bg-white appearance-none cursor-pointer">
+                        {Object.keys(REGIONS).map(r => <option key={r}>{r}</option>)}
+                      </select>
+                      <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs text-gray-500 mb-1 block font-medium">Tuman *</label>
                       <div className="grid grid-cols-2 gap-1.5">
-                        {districts.map(d => (
+                        {(REGIONS[region] || []).map(d => (
                           <button key={d} onClick={() => setForm(f => ({ ...f, district: d }))}
                             className={`text-xs py-2 rounded-xl border-2 font-medium transition-colors ${
                               form.district === d ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 text-gray-500 hover:border-green-300"
@@ -501,6 +512,18 @@ export default function DeveloperPage({ onNav }: { onNav: (p: Page) => void }) {
                       <label className="text-xs text-gray-500 mb-1 block font-medium">Liftlar</label>
                       <input type="number" value={form.elevator_count} onChange={e => setForm(f => ({ ...f, elevator_count: Number(e.target.value) }))}
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="text-xs text-gray-500 mb-1 block font-medium">Segment</label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {["Standart", "Komfort", "Biznes"].map(s => (
+                        <button key={s} onClick={() => setForm(f => ({ ...f, segment: s }))}
+                          className={`text-xs py-2.5 rounded-xl border-2 font-medium transition-colors ${
+                            form.segment === s ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 text-gray-500 hover:border-green-300"
+                          }`}>{s}</button>
+                      ))}
                     </div>
                   </div>
 
