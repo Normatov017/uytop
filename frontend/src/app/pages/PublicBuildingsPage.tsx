@@ -135,11 +135,19 @@ export default function PublicBuildingsPage({ onNav }: { onNav: (p: Page) => voi
                       <div className="w-full h-full flex items-center justify-center"><Building2 size={48} className="text-gray-300" /></div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                    {b.company_verified && (
-                      <span className="absolute top-2.5 left-2.5 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <CheckCircle size={10} /> Tasdiqlangan
-                      </span>
-                    )}
+                    <div className="absolute top-2.5 left-2.5 flex gap-1.5">
+                      {b.segment && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          b.segment === "Biznes" ? "bg-purple-600 text-white" :
+                          b.segment === "Komfort" ? "bg-blue-600 text-white" : "bg-gray-600 text-white"
+                        }`}>{b.segment}</span>
+                      )}
+                      {b.company_verified && (
+                        <span className="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <CheckCircle size={10} /> Tasdiqlangan
+                        </span>
+                      )}
+                    </div>
                     {b.free_count > 0 && (
                       <span className="absolute top-2.5 right-2.5 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                         {b.free_count} ta bo'sh
@@ -277,7 +285,7 @@ export default function PublicBuildingsPage({ onNav }: { onNav: (p: Page) => voi
                 {[
                   { id: "apartments", label: "Kvartiralar" },
                   { id: "plans", label: "Planirovka" },
-                  { id: "info", label: "Ma'lumot" },
+                  { id: "info", label: `Ma'lumot${detail?.documents?.length ? ` (${detail.documents.length})` : ""}` },
                 ].map(({ id, label }) => (
                   <button key={id} onClick={() => setDetailTab(id as typeof detailTab)}
                     className={`px-5 py-2 rounded-lg text-sm font-bold transition-colors ${
@@ -439,6 +447,7 @@ export default function PublicBuildingsPage({ onNav }: { onNav: (p: Page) => voi
                         { label: "Shahar", value: detail.city },
                         { label: "Qavatlar", value: `${detail.total_floors} qavat` },
                         { label: "Kvartiralar", value: `${detail.total_apartments} ta` },
+                        { label: "Segment", value: detail.segment || "—" },
                         { label: "Qurilish materiali", value: detail.building_material || "—" },
                         { label: "Parkovka", value: detail.parking_type || "—" },
                         { label: "Liftlar", value: detail.elevator_count ? `${detail.elevator_count} ta` : "—" },
