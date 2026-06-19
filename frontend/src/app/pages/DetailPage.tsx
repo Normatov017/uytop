@@ -95,7 +95,7 @@ function DetailPage({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 pb-24 md:pb-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main */}
           <div className="lg:col-span-2 space-y-4">
@@ -792,6 +792,42 @@ function DetailPage({
             </div>
           </div>
         )}
+
+        {/* Mobile sticky contact bar */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 p-3 md:hidden flex gap-2 items-center">
+          <a href={`tel:${listing.owner.phone}`}
+            onClick={() => api.trackContact(listing.id, "phone").catch(() => undefined)}
+            className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition-colors text-sm">
+            <Phone size={16} /> Qo'ng'iroq
+          </a>
+          <a href={listing.owner.telegram ? `https://t.me/${listing.owner.telegram.replace(/^@/, "")}` : "#"}
+            target={listing.owner.telegram ? "_blank" : undefined}
+            rel="noopener noreferrer"
+            onClick={(e) => {
+              if (!listing.owner.telegram) e.preventDefault();
+              api.trackContact(listing.id, "telegram").catch(() => undefined);
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition-colors text-sm ${
+              listing.owner.telegram
+                ? "bg-blue-50 hover:bg-blue-100 text-blue-700"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}>
+            <MessageCircle size={16} /> Telegram
+          </a>
+          {currentUser && currentUser.id !== listing.ownerId && (
+            <button onClick={async () => {
+              try {
+                const conv = await api.createConversation(listing.id, listing.ownerId);
+                onNav("chat");
+              } catch (e) {
+                alert("Xatolik yuz berdi");
+              }
+            }}
+              className="flex-1 flex items-center justify-center gap-2 border border-green-200 hover:border-green-400 text-green-700 font-semibold py-3 rounded-xl transition-colors text-sm">
+              <MessageCircle size={16} /> Chat
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -141,8 +141,8 @@ function ListingsPage({
     if (sortBy === "Ko'p ko'rilgan") return b.views - a.views;
     return b.id - a.id;
   });
-  const paginated = filtered.slice(0, pageNum * perPage);
-  const hasMore = paginated.length < filtered.length;
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paginated = filtered.slice((pageNum - 1) * perPage, pageNum * perPage);
 
   const FilterSection = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="mb-5">
@@ -175,7 +175,7 @@ function ListingsPage({
           {["", "1", "2", "3", "4", "5", "6+"].map((r) => (
             <button key={r}
               onClick={() => setRoomsFilter(r === roomsFilter ? "" : r)}
-              className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+              className={`px-4 py-2 text-xs rounded-lg border transition-colors ${
                 roomsFilter === r
                   ? "bg-green-600 text-white border-green-600"
                   : "bg-white text-gray-600 border-gray-200 hover:border-green-400"
@@ -242,7 +242,7 @@ function ListingsPage({
           {["", "sale", "rent"].map((s) => (
             <button key={s}
               onClick={() => setFilterStatus(s === filterStatus ? "" : s)}
-              className={`flex-1 px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+              className={`flex-1 px-4 py-2 text-xs rounded-lg border transition-colors ${
                 filterStatus === s
                   ? "bg-green-600 text-white border-green-600"
                   : "bg-white text-gray-600 border-gray-200 hover:border-green-400"
@@ -316,7 +316,7 @@ function ListingsPage({
           {showSidebar && (
             <div className="fixed inset-0 z-40 md:hidden" onClick={() => setShowSidebar(false)}>
               <div className="absolute inset-0 bg-black/20" />
-              <div className="absolute left-0 top-0 bottom-0 w-72 bg-white overflow-y-auto p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-sm bg-white overflow-y-auto p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-bold text-gray-900">Filtrlash</span>
                   <button onClick={() => setShowSidebar(false)} className="p-1 hover:bg-gray-100 rounded"><X size={16} /></button>
@@ -380,11 +380,25 @@ function ListingsPage({
                       onFav={() => toggleFav(l.id)} isFav={favorites.includes(l.id)} displayInUzs={showInUzs} />
                   ))}
                 </div>
-                {hasMore && (
-                  <div className="text-center mt-8">
-                    <button onClick={() => setPageNum(p => p + 1)}
-                      className="bg-white border border-gray-200 hover:border-green-400 text-gray-700 font-semibold px-8 py-3 rounded-xl text-sm transition-colors">
-                      Yana ko'rish ({filtered.length - paginated.length} ta)
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-1.5 mt-8">
+                    <button onClick={() => setPageNum(p => Math.max(1, p - 1))} disabled={pageNum === 1}
+                      className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none transition-colors">
+                      ←
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                      <button key={p} onClick={() => setPageNum(p)}
+                        className={`min-w-[36px] h-9 rounded-lg text-sm font-medium transition-colors ${
+                          p === pageNum
+                            ? "bg-green-600 text-white shadow-sm"
+                            : "text-gray-600 hover:bg-gray-100"
+                        }`}>
+                        {p}
+                      </button>
+                    ))}
+                    <button onClick={() => setPageNum(p => Math.min(totalPages, p + 1))} disabled={pageNum === totalPages}
+                      className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none transition-colors">
+                      →
                     </button>
                   </div>
                 )}

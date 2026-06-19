@@ -138,34 +138,32 @@ function Header({
       </div>
 
       {/* Search bar */}
-      {(searchOpen || true) && (
-        <div className="border-t border-gray-100 bg-gray-50 px-4 py-3">
-          <div className="max-w-7xl mx-auto flex items-center gap-2">
-            <div className="flex-1 relative">
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Shahar, tuman yoki manzil..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onFocus={() => {
-                  localStorage.setItem("uymap_header_search", searchText);
-                  onNav("listings");
-                }}
-                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-green-500 bg-white transition-all"
-              />
-            </div>
-            <button onClick={() => onNav("map")}
-              className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-600 hover:border-green-500 hover:text-green-600 transition-colors bg-white">
-              <Map size={14} /> Xarita
-            </button>
-            <button onClick={() => onNav("add")}
-              className="md:hidden flex items-center gap-1.5 bg-green-600 text-white text-sm font-semibold px-3 py-2.5 rounded-lg transition-colors">
-              <Plus size={14} />
-            </button>
+      <div className={`border-t border-gray-100 bg-gray-50 px-4 py-3 ${searchOpen ? "block" : "hidden md:block"}`}>
+        <div className="max-w-7xl mx-auto flex items-center gap-2">
+          <div className="flex-1 relative">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Shahar, tuman yoki manzil..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onFocus={() => {
+                localStorage.setItem("uymap_header_search", searchText);
+                onNav("listings");
+              }}
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-green-500 bg-white transition-all"
+            />
           </div>
+          <button onClick={() => onNav("map")}
+            className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-600 hover:border-green-500 hover:text-green-600 transition-colors bg-white">
+            <Map size={14} /> Xarita
+          </button>
+          <button onClick={() => onNav("add")}
+            className="md:hidden flex items-center gap-1.5 bg-green-600 text-white text-sm font-semibold px-3 py-2.5 rounded-lg transition-colors">
+            <Plus size={14} />
+          </button>
         </div>
-      )}
+      </div>
 
       {/* Mobile menu */}
       {menuOpen && (

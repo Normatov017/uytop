@@ -371,16 +371,16 @@ export default function DashboardPage({
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-2">
                             <button
                               onClick={() => onNav("detail", l.id)}
-                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
                             >
-                              <Eye size={13} />
+                              <Eye size={15} />
                             </button>
                             <button onClick={() => onNav("detail", l.id)}
-                              className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
-                              <Edit size={13} />
+                              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-colors">
+                              <Edit size={15} />
                             </button>
                             {l.apiStatus !== "sold" && l.apiStatus !== "rented" && (
                               <button
@@ -391,17 +391,17 @@ export default function DashboardPage({
                                     window.location.reload();
                                   } catch {}
                                 }}
-                                className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-colors"
                                 title="Yakunlash"
                               >
-                                <CheckCircle size={13} />
+                                <CheckCircle size={15} />
                               </button>
                             )}
                             <button
                               onClick={() => onDelete(l.id)}
-                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={15} />
                             </button>
                           </div>
                         </td>
