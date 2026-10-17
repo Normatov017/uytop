@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Scale, Plus, X, MapPin, Check, Star, TrendingUp, Search, Home, Ruler, Layers, Bath } from "lucide-react";
 import type { Listing, Page } from "../types";
 import { t } from "../../lib/i18n";
+import BackButton from "../components/BackButton";
 
 interface FieldDef {
   key: string;
@@ -25,9 +26,11 @@ const fields: FieldDef[] = [
 export default function ComparePage({
   listings,
   onNav,
+  goBack,
 }: {
   listings: Listing[];
   onNav: (p: Page, id?: number) => void;
+  goBack: () => void;
 }) {
   const [selected, setSelected] = useState<Listing[]>([]);
   const [showPicker, setShowPicker] = useState(false);
@@ -61,6 +64,7 @@ export default function ComparePage({
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-6xl mx-auto px-4">
+          <BackButton onClick={goBack} />
         <div className="flex items-center gap-3 mb-8">
           <div className="w-11 h-11 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-green-200">
             <Scale size={22} className="text-white" />

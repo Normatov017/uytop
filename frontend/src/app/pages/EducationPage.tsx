@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BookOpen, GraduationCap, FileText, Video, Users, ChevronRight, Play, ArrowRight, Star } from "lucide-react";
 import type { Page } from "../types";
 import { t } from "../../lib/i18n";
+import BackButton from "../components/BackButton";
 
 const categories = [
   { icon: Video, label: "Video darslar", count: 12, color: "bg-red-100 text-red-600" },
@@ -60,13 +61,14 @@ const experts = [
   { name: "Jahongir Aliyev", title: "Investitsiya maslahatchisi", rating: 4.7, price: "$60/soat", tags: ["Investitsiya", "Tahlil"] },
 ];
 
-export default function EducationPage({ onNav }: { onNav: (p: Page) => void }) {
+export default function EducationPage({ onNav, goBack }: { onNav: (p: Page) => void; goBack: () => void }) {
   const [tab, setTab] = useState<"all" | "video" | "article">("all");
   const filtered = tab === "all" ? lessons : lessons.filter(l => l.category === tab);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-5xl mx-auto px-4">
+          <BackButton onClick={goBack} />
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
             <GraduationCap size={20} className="text-white" />

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from math import ceil
 
 import httpx
@@ -6,8 +7,11 @@ from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
+from app.core.database import SessionLocal
 from app.models.enums import PropertyStatus
 from app.models.image import PropertyImage
+from app.models.notification import Notification
+from app.models.price_alert import PriceAlert
 from app.models.price_history import PriceHistory
 from app.models.property import Property
 from app.models.user import User
@@ -42,7 +46,7 @@ def _record_price(db: Session, prop: Property) -> None:
 
 def create_property(db: Session, owner: User, payload: PropertyCreate) -> Property:
     data = payload.model_dump(exclude={"image_urls"})
-    prop = Property(**data, owner_id=owner.id)
+    prop = Property(**data, owner_id=owner.id, expires_at=datetime.now(timezone.utc) + timedelta(days=30))
     db.add(prop)
     db.flush()
     for index, url in enumerate(payload.image_urls):
@@ -64,6 +68,31 @@ def update_property(db: Session, prop: Property, payload: PropertyUpdate) -> Pro
     db.add(prop)
     db.commit()
     db.refresh(prop)
+    if price_changed:
+        try:
+            session = SessionLocal()
+            try:
+                new_price = float(prop.price)
+                alerts = session.query(PriceAlert).filter(
+                    PriceAlert.property_id == prop.id,
+                    PriceAlert.notified == False,
+                ).all()
+                for alert in alerts:
+                    target = alert.target_price or float(prop.price) * 0.95
+                    if new_price <= target:
+                        alert.notified = True
+                        session.add(Notification(
+                            user_id=alert.user_id,
+                            type="price_drop",
+                            title="Narx tushdi!",
+                            message=f'"{prop.title}" narxi {new_price}$ ga tushdi',
+                            link=f"/detail/{prop.id}",
+                        ))
+                session.commit()
+            finally:
+                session.close()
+        except Exception:
+            pass
     return prop
 
 

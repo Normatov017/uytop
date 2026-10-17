@@ -9,6 +9,7 @@ export interface ApiUser {
   region: string;
   district: string;
   is_active: boolean;
+  is_blocked?: boolean;
   created_at: string;
 }
 
@@ -111,6 +112,51 @@ export interface AdminStats {
   today_properties: number;
 }
 
+export interface UserGrowthItem {
+  month: string;
+  count: number;
+}
+
+export interface ListingTrend {
+  date: string;
+  count: number;
+}
+
+export interface StatusBreakdownItem {
+  status: string;
+  count: number;
+}
+
+export interface DistrictSummary {
+  district: string;
+  listings_count: number;
+  avg_price: number | null;
+  avg_price_per_m2: number | null;
+}
+
+export interface MarketSummary {
+  total_listings: number;
+  avg_price: number | null;
+  avg_price_per_m2: number | null;
+  by_district: DistrictSummary[];
+}
+
+export interface AdminDashboard {
+  total_properties: number;
+  active_properties: number;
+  pending_properties: number;
+  sold_properties: number;
+  rented_properties: number;
+  expired_properties: number;
+  total_users: number;
+  agents: number;
+  today_properties: number;
+  user_growth: UserGrowthItem[];
+  listing_trends: ListingTrend[];
+  status_breakdown: StatusBreakdownItem[];
+  market_summary: MarketSummary;
+}
+
 export type PropertyCreatePayload = {
   title: string;
   description: string;
@@ -160,7 +206,7 @@ export interface MarketSummary {
   total_listings: number;
   avg_price: number | null;
   avg_price_per_m2: number | null;
-  by_district: { district: string; listings_count: number; avg_price: number | null; avg_price_per_m2: number | null }[];
+  by_district: DistrictSummary[];
 }
 
 export interface DistrictAnalytics {
@@ -168,7 +214,7 @@ export interface DistrictAnalytics {
   avg_price: number | null;
   avg_price_per_m2: number | null;
   listings_count: number;
-  price_trends: { month: string; avg_price: number | null }[];
+  price_trends: PriceTrend[];
 }
 
 export interface PriceTrend {

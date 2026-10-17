@@ -17,15 +17,15 @@ export default function PublicBuildingsPage({ onNav }: { onNav: (p: Page) => voi
   const [detailTab, setDetailTab] = useState<"apartments" | "plans" | "info">("apartments");
   const [roomFilter, setRoomFilter] = useState<number | null>(null);
   const [activeImg, setActiveImg] = useState(0);
+  const [showContact, setShowContact] = useState<number | null>(null);
 
   const load = async (d?: string) => {
     setLoading(true);
     try {
       const data = await api.publicBuildings(d || undefined);
-      setBuildings(data);
+      setBuildings(data.length > 0 ? data : (d ? MOCK_BUILDINGS.filter(b => b.district === d) : MOCK_BUILDINGS));
     } catch {
-      const filtered = d ? MOCK_BUILDINGS.filter(b => b.district === d) : MOCK_BUILDINGS;
-      setBuildings(filtered);
+      setBuildings(d ? MOCK_BUILDINGS.filter(b => b.district === d) : MOCK_BUILDINGS);
     }
     setLoading(false);
   };
@@ -353,11 +353,17 @@ export default function PublicBuildingsPage({ onNav }: { onNav: (p: Page) => voi
                             </div>
                             <div className="flex items-center justify-between mt-3">
                               <div className="text-xl font-extrabold text-green-600">${Number(apt.price).toLocaleString()}</div>
-                              <button onClick={() => { onNav("listings"); }}
+                              <button onClick={() => setShowContact(showContact === apt.id ? null : apt.id)}
                                 className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl transition-colors">
                                 Bog'lanish
                               </button>
                             </div>
+                            {showContact === apt.id && (
+                              <div className="mt-3 p-3 bg-green-50 rounded-xl text-sm">
+                                <p className="font-semibold text-gray-900">{detail.company_name || "Qurilish kompaniyasi"}</p>
+                                <p className="text-gray-600 mt-1">Telefon: {detail.company_phone || "+998 90 000 00 00"}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -491,7 +497,7 @@ export default function PublicBuildingsPage({ onNav }: { onNav: (p: Page) => voi
                             )}
                           </div>
                         </div>
-                        <button onClick={() => load(detail.company_name)}
+                        <button onClick={closeDetail}
                           className="text-xs font-semibold text-green-600 bg-green-50 hover:bg-green-100 px-4 py-2 rounded-xl transition-colors">
                           Barcha loyihalari
                         </button>

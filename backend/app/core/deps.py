@@ -29,7 +29,7 @@ def get_current_user(db: DbSession, token: Annotated[str, Depends(oauth2_scheme)
         raise credentials_error from exc
 
     user = db.get(User, int(user_id))
-    if not user or not user.is_active:
+    if not user or not user.is_active or user.is_blocked:
         raise credentials_error
     return user
 

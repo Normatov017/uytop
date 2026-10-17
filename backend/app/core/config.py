@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = "uploads"
     MEDIA_URL: str = "/media"
     TELEGRAM_BOT_TOKEN: str = ""
+    GOOGLE_CLIENT_ID: str = ""
     FRONTEND_URL: str = "http://localhost:5173"
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")

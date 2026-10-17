@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin } from "lucide-react";
 import { api } from "../../lib/api";
 import type { ApiUser } from "../../lib/types";
 import type { Page } from "../types";
 import { t } from "../../lib/i18n";
+import BackButton from "../components/BackButton";
 
-export default function LoginPage({ onNav, onAuth }: { onNav: (p: Page) => void; onAuth: (user: ApiUser) => void }) {
+export default function LoginPage({ onNav, onAuth, goBack }: { onNav: (p: Page) => void; onAuth: (user: ApiUser) => void; goBack: () => void }) {
   const [phoneOrEmail, setPhoneOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   const handleLogin = async () => {
     setError("");
@@ -26,9 +28,84 @@ export default function LoginPage({ onNav, onAuth }: { onNav: (p: Page) => void;
     }
   };
 
+  useEffect(() => {
+    (window as any).onTelegramAuth = async (user: any) => {
+      try {
+        setLoading(true);
+        setError("");
+        const result = await api.telegramAuth({
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name || "",
+          username: user.username || "",
+          photo_url: user.photo_url || "",
+          auth_date: user.auth_date,
+          hash: user.hash,
+        });
+        api.saveToken(result.access_token);
+        onAuth(result.user);
+        onNav("dashboard");
+      } catch (err) {
+        setError("Telegram orqali kirishda xatolik. Iltimos, qayta urinib ko'ring.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    (window as any).handleGoogleCredential = async (response: any) => {
+      try {
+        setLoading(true);
+        setError("");
+        const result = await api.googleAuth(response.credential);
+        api.saveToken(result.access_token);
+        onAuth(result.user);
+        onNav("dashboard");
+      } catch (err) {
+        setError("Google orqali kirishda xatolik. Iltimos, qayta urinib ko'ring.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (googleClientId) {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.onload = () => {
+        if (window.google?.accounts?.id) {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: window.handleGoogleCredential,
+          });
+          window.google.accounts.id.renderButton(
+            document.getElementById("google-signin-btn"),
+            { theme: "outline", size: "large", width: "100%", text: "signin_with", shape: "pill" }
+          );
+        }
+      };
+      document.body.appendChild(script);
+      return () => {
+        if (script.parentNode) script.parentNode.removeChild(script);
+      };
+    }
+  }, []);
+
+  const handleTelegramClick = () => {
+    setLoading(true);
+    const script = document.createElement("script");
+    script.src = "https://telegram.org/js/telegram-widget.js?22";
+    script.setAttribute("data-telegram-login", "Uymapbot");
+    script.setAttribute("data-size", "large");
+    script.setAttribute("data-onauth", "onTelegramAuth(user)");
+    script.setAttribute("data-request-access", "write");
+    script.async = true;
+    document.body.appendChild(script);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
+        <BackButton onClick={goBack} />
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-5">
             <div className="w-12 h-12 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -85,11 +162,16 @@ export default function LoginPage({ onNav, onAuth }: { onNav: (p: Page) => void;
           </div>
 
           <div className="flex gap-3">
-            <button className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors">
-              <span className="font-extrabold text-blue-500">G</span> Google
-            </button>
-            <button className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors">
-              <span className="font-extrabold text-blue-400">T</span> Telegram
+            {googleClientId ? (
+              <div id="google-signin-btn" className="flex-1"></div>
+            ) : (
+              <button disabled className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-400 flex items-center justify-center gap-2 cursor-not-allowed">
+                <span className="font-extrabold text-blue-300">G</span> Google
+              </button>
+            )}
+            <button onClick={handleTelegramClick} disabled={loading}
+              className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors disabled:opacity-50">
+              <span className="font-extrabold text-blue-400">T</span> {loading ? "Telegram..." : "Telegram"}
             </button>
           </div>
 

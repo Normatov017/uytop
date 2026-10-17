@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Settings, Eye, Edit, Trash2, Heart, Bell, BellOff, TrendingUp, BarChart3, Users, User, Upload, Check, CheckCircle, FileText, Bookmark, Search, Trash2 as Trash, ExternalLink, Clock, Star, Target } from "lucide-react";
+import { Plus, Settings, Eye, Edit, Trash2, Heart, Bell, BellOff, TrendingUp, BarChart3, Users, User, Upload, Check, CheckCircle, FileText, Bookmark, Search, Trash2 as Trash, ExternalLink, Clock, Star, Target, Zap } from "lucide-react";
 import { api } from "../../lib/api";
 import type { ApiUser } from "../../lib/types";
 import type { Listing, Page } from "../types";
@@ -8,9 +8,12 @@ import PropertyCard from "../components/PropertyCard";
 import { getRecentlyViewed, getPreferences, savePreferences, clearPreferences } from "../../lib/storage";
 import type { BuyerPreferences } from "../../lib/storage";
 import { t } from "../../lib/i18n";
+import BoostModal from "../components/BoostModal";
+import BackButton from "../components/BackButton";
 
 export default function DashboardPage({
   onNav,
+  goBack,
   listings,
   favorites,
   toggleFav,
@@ -18,6 +21,7 @@ export default function DashboardPage({
   onDelete,
 }: {
   onNav: (p: Page, id?: number) => void;
+  goBack: () => void;
   listings: Listing[];
   favorites: number[];
   toggleFav: (id: number) => void;
@@ -35,6 +39,9 @@ export default function DashboardPage({
   const [editPrefs, setEditPrefs] = useState<BuyerPreferences>({});
   const recentlyViewed = getRecentlyViewed();
   const [viewStatsMap, setViewStatsMap] = useState<Record<number, any>>({});
+  const [showBoostFor, setShowBoostFor] = useState<number | null>(null);
+
+  const myListings = currentUser ? listings.filter((listing) => listing.ownerId === currentUser.id) : listings;
 
   useEffect(() => {
     if (localStorage.getItem(api.tokenKey)) {
@@ -64,7 +71,6 @@ export default function DashboardPage({
     const d = await api.alerts();
     setAlerts(d);
   };
-  const myListings = currentUser ? listings.filter((listing) => listing.ownerId === currentUser.id) : listings;
 
   const statuses = [
     { label: "Aktiv", cls: "bg-green-100 text-green-700", count: myListings.filter((l) => l.apiStatus === "active").length },
@@ -83,6 +89,7 @@ export default function DashboardPage({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-8">
+        <BackButton onClick={goBack} />
         {/* Profile */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 flex flex-col md:flex-row items-start md:items-center gap-4">
           <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center text-white text-2xl font-extrabold shrink-0">
@@ -116,7 +123,7 @@ export default function DashboardPage({
             { id: "alerts", label: "Kuzatuv" },
             { id: "profile", label: t("profile") },
             { id: "stats", label: "Statistika" },
-            ...((currentUser?.role === "AGENT" || currentUser?.role === "ADMIN") ? [{ id: "analytics", label: t("analytics") }] : []),
+            ...((currentUser?.role === "OWNER" || currentUser?.role === "ADMIN") ? [{ id: "analytics", label: t("analytics") }] : []),
           ].map(({ id, label }) => (
             <button
               key={id}
@@ -373,6 +380,24 @@ export default function DashboardPage({
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <button
+                              onClick={() => setShowBoostFor(l.id)}
+                              className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-colors"
+                              title="Reklama qilish"
+                            >
+                              <Zap size={15} />
+                            </button>
+                            <label className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-colors cursor-pointer" title="Avtomatik pasaytirish">
+                              <input
+                                type="checkbox"
+                                className="w-4 h-4 accent-green-600 rounded cursor-pointer"
+                                onChange={async (e) => {
+                                  try {
+                                    await api.setAutoDecrease(l.id, { enabled: e.target.checked, rate: 1 });
+                                  } catch {}
+                                }}
+                              />
+                            </label>
+                            <button
                               onClick={() => onNav("detail", l.id)}
                               className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
                             >
@@ -411,6 +436,13 @@ export default function DashboardPage({
                 </tbody>
               </table>
             </div>
+            {showBoostFor && (
+              <BoostModal
+                propertyId={showBoostFor}
+                onClose={() => setShowBoostFor(null)}
+                onSuccess={() => setShowBoostFor(null)}
+              />
+            )}
           </div>
         )}
 

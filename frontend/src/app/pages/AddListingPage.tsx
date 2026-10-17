@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building, Home, Star, Layers, BarChart2, Upload, X, Shield, Check, Plus, Zap, ChevronDown } from "lucide-react";
+import { Building, Home, Star, Layers, BarChart2, Upload, X, Shield, Check, Plus, Zap, ChevronDown, MapPin } from "lucide-react";
 import type { Page } from "../types";
 import type { PropertyCreatePayload, ApiProperty, ApiUser } from "../../lib/types";
 import { api } from "../../lib/api";
@@ -34,7 +34,8 @@ function AddListingPage({
   const [price, setPrice] = useState("");
   const [rooms, setRooms] = useState("");
   const [area, setArea] = useState("");
-  const [floorText, setFloorText] = useState("");
+  const [floor, setFloor] = useState("");
+  const [totalFloors, setTotalFloors] = useState("");
   const [buildingType, setBuildingType] = useState("Panel");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imageUrlInput, setImageUrlInput] = useState("");
@@ -42,8 +43,8 @@ function AddListingPage({
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const totalSteps = 6;
-  const stepLabels = ["E'lon turi", "Obyekt turi", "Manzil", "Ma'lumotlar", "Rasmlar", "Aloqa"];
+  const totalSteps = 3;
+  const stepLabels = ["Uy turi", "Manzil va ma'lumot", "Aloqa"];
   const adTypeMap: Record<string, PropertyCreatePayload["operation_type"]> = {
     sotuv: "sale",
     ijara: "rent",
@@ -73,7 +74,8 @@ function AddListingPage({
     }
     setSubmitError("");
     setSubmitting(true);
-    const [floor, totalFloors] = floorText.split("/").map((value) => Number(value.trim()));
+    const floorNumber = Number(floor);
+    const totalFloorsNumber = Number(totalFloors);
     try {
       const property = await api.createProperty({
         title: title || `${rooms || ""} xonali ${objType || "mulk"}, ${district}`.trim(),
@@ -91,8 +93,8 @@ function AddListingPage({
         longitude: lng,
         rooms: Number(rooms || 0),
         area_m2: Number(area || 0),
-        floor: Number.isFinite(floor) ? floor : null,
-        total_floors: Number.isFinite(totalFloors) ? totalFloors : null,
+        floor: Number.isFinite(floorNumber) ? floorNumber : null,
+        total_floors: Number.isFinite(totalFloorsNumber) ? totalFloorsNumber : null,
         building_type: buildingType,
         repair_type: repair || null,
         document_status: "Tekshiruvda",
@@ -109,8 +111,9 @@ function AddListingPage({
     }
   };
 
-  const handleImageUpload = async (file: File | undefined) => {
-    if (!file) return;
+  const handleImageUpload = async (files: FileList | File[] | null | undefined) => {
+    const selectedFiles = Array.from(files ?? []);
+    if (selectedFiles.length === 0) return;
     if (!currentUser) {
       onNav("login");
       return;
@@ -118,8 +121,11 @@ function AddListingPage({
     setSubmitError("");
     setUploading(true);
     try {
-      const result = await api.uploadImage(file);
-      setImageUrls(prev => [...prev, api.mediaUrl(result.url)]);
+      const results = [];
+      for (const file of selectedFiles) {
+        results.push(await api.uploadImage(file));
+      }
+      setImageUrls(prev => [...prev, ...results.map((result) => api.mediaUrl(result.url))].slice(0, 20));
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Rasm yuklashda xatolik yuz berdi");
     } finally {
@@ -131,8 +137,8 @@ function AddListingPage({
     <div className="min-h-screen bg-gray-50 pb-24">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Yangi e'lon qo'shish</h1>
-          <p className="text-sm text-gray-500">E'loningiz moderatsiyadan so'ng joylashtiriladi</p>
+          <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Uyingizni maklersiz joylang</h1>
+          <p className="text-sm text-gray-500">3 qadamda: uy turi, manzil-ma'lumot, aloqa. Makler va komissiya yo'q.</p>
         </div>
 
         {/* Step indicator */}
@@ -234,8 +240,8 @@ function AddListingPage({
             </div>
           )}
 
-          {step === 2 && (
-            <div>
+          {step === 1 && (
+            <div className="mt-8 border-t border-gray-100 pt-6">
               <h2 className="text-lg font-bold text-gray-900 mb-5">Obyekt turini tanlang</h2>
               <div className="grid grid-cols-2 gap-3">
                 {[
@@ -271,7 +277,7 @@ function AddListingPage({
             </div>
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <div>
               <h2 className="text-lg font-bold text-gray-900 mb-5">Manzil</h2>
               <div className="space-y-4">
@@ -304,7 +310,7 @@ function AddListingPage({
                       <select value={metroStation} onChange={(e) => setMetroStation(e.target.value)}
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500 bg-white appearance-none cursor-pointer">
                         <option value="">Metro tanlang</option>
-                        {METRO_STATIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                        {METRO_STATIONS.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
                       </select>
                       <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     </div>
@@ -324,6 +330,25 @@ function AddListingPage({
                   <label className="text-sm font-semibold text-gray-700 block mb-2">
                     Xaritadan joy tanlang
                   </label>
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {[
+                      { label: "Yunusobod", lat: 41.366, lng: 69.287 },
+                      { label: "Chilonzor", lat: 41.285, lng: 69.204 },
+                      { label: "Yakkasaroy", lat: 41.292, lng: 69.267 },
+                    ].map((item) => (
+                      <button
+                        key={item.label}
+                        onClick={() => {
+                          setLat(item.lat);
+                          setLng(item.lng);
+                          if (!district) setDistrict(item.label);
+                        }}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 px-2 py-2 text-xs font-semibold text-gray-600 hover:border-green-400 hover:text-green-700"
+                      >
+                        <MapPin size={12} /> {item.label}
+                      </button>
+                    ))}
+                  </div>
                   <LocationPicker
                     lat={lat}
                     lng={lng}
@@ -335,13 +360,29 @@ function AddListingPage({
                   <p className="text-xs text-gray-400 mt-1.5">
                     Xaritadagi joyni bosing yoki markerni sudrab olib boring — koordinatalar avtomatik saqlanadi
                   </p>
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={lat}
+                      onChange={(e) => setLat(Number(e.target.value))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-green-500"
+                    />
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={lng}
+                      onChange={(e) => setLng(Number(e.target.value))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-green-500"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {step === 4 && (
-            <div>
+          {step === 2 && (
+            <div className="mt-8 border-t border-gray-100 pt-6">
               <h2 className="text-lg font-bold text-gray-900 mb-5">Asosiy ma'lumotlar</h2>
               <div className="space-y-4">
                 <div>
@@ -401,15 +442,27 @@ function AddListingPage({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1.5">{t("floor")}</label>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1.5">Nechanchi qavat?</label>
                     <input
-                      type="text"
-                      placeholder="5/9"
-                      value={floorText}
-                      onChange={(e) => setFloorText(e.target.value)}
+                      type="number"
+                      placeholder="6"
+                      value={floor}
+                      onChange={(e) => setFloor(e.target.value)}
                       className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
                     />
                   </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1.5">Jami qavat</label>
+                    <input
+                      type="number"
+                      placeholder="9"
+                      value={totalFloors}
+                      onChange={(e) => setTotalFloors(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="text-sm font-semibold text-gray-700 block mb-1.5">Bino turi</label>
                     <select
@@ -479,8 +532,8 @@ function AddListingPage({
             </div>
           )}
 
-          {step === 5 && (
-            <div>
+          {step === 2 && (
+            <div className="mt-8 border-t border-gray-100 pt-6">
               <h2 className="text-lg font-bold text-gray-900 mb-1.5">Rasmlar</h2>
               <p className="text-sm text-gray-400 mb-5">Kamida 3 ta rasm yuklang (maksimal 20 ta)</p>
               <div className="grid grid-cols-3 gap-3">
@@ -492,10 +545,11 @@ function AddListingPage({
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     className="hidden"
                     key={imageUrls.length}
                     onChange={(e) => {
-                      handleImageUpload(e.target.files?.[0]);
+                      handleImageUpload(e.target.files);
                       e.target.value = "";
                     }}
                   />
@@ -544,7 +598,7 @@ function AddListingPage({
             </div>
           )}
 
-          {step === 6 && (
+          {step === 3 && (
             <div>
               <h2 className="text-lg font-bold text-gray-900 mb-5">Aloqa ma'lumotlari</h2>
               <div className="space-y-4">
@@ -585,12 +639,11 @@ function AddListingPage({
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-700 block mb-2">Siz kimsiiz?</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <label className="text-sm font-semibold text-gray-700 block mb-2">Siz kim bo'lasiz?</label>
+                  <div className="grid grid-cols-2 gap-2">
                     {[
-                      { v: "user", l: "Oddiy foydalanuvchi" },
                       { v: "owner", l: "Uy egasi" },
-                      { v: "agent", l: "Agent" },
+                      { v: "user", l: "Egasining vakili" },
                     ].map(({ v, l }) => (
                       <button
                         key={v}
@@ -610,7 +663,7 @@ function AddListingPage({
                   <label className="flex items-start gap-2 cursor-pointer">
                     <input type="checkbox" className="mt-0.5 w-4 h-4 accent-green-600 rounded" />
                     <span className="text-xs text-gray-600">
-                      UyMap.uz foydalanish shartlari va maxfiylik siyosatiga roziman
+                      Men makler emasman, komissiya olmayman va e'lon egasi yoki egasining bevosita vakiliman.
                     </span>
                   </label>
                 </div>

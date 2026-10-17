@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  MapPin, Heart, CheckCircle, Eye, Clock, Phone, MessageCircle, Check, X, Shield, Calendar, Bell, BellOff, TrendingUp, Share2, Send, Copy, Scale, Star, Maximize2,   Zap, Trash2,
+  MapPin, Heart, CheckCircle, Eye, Clock, Phone, MessageCircle, Check, X, Shield, Calendar, Bell, BellOff, TrendingUp, Share2, Send, Copy, Scale, Star, Maximize2, Zap, Trash2, Edit, Train, QrCode,
 } from "lucide-react";
 import BoostModal from "../components/BoostModal";
+import BackButton from "../components/BackButton";
 import type { Listing, Page } from "../types";
+import { METRO_STATIONS } from "../types";
 import { api } from "../../lib/api";
 import type { ApiUser, PropertyInsight } from "../../lib/types";
 import { addRecentlyViewed } from "../../lib/storage";
@@ -16,6 +18,7 @@ function DetailPage({
   listing,
   listings,
   onNav,
+  goBack,
   favorites,
   toggleFav,
   currentUser,
@@ -24,10 +27,11 @@ function DetailPage({
   listing: Listing;
   listings: Listing[];
   onNav: (p: Page, id?: number) => void;
+  goBack: () => void;
   favorites: number[];
   toggleFav: (id: number) => void;
   currentUser: ApiUser | null;
-  viewOwnerListings?: (ownerId: number) => void;
+  viewOwnerListings: (ownerId: number) => void;
 }) {
   const [activeImg, setActiveImg] = useState(0);
   const [insight, setInsight] = useState<PropertyInsight | null>(null);
@@ -45,6 +49,38 @@ function DetailPage({
   const [targetPrice, setTargetPrice] = useState("");
   const [existingAlerts, setExistingAlerts] = useState<any[]>([]);
   const [districtRatingData, setDistrictRatingData] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ safety_rating: 5, infrastructure_rating: 5, transport_rating: 5, comment: "" });
+  const [reactivating, setReactivating] = useState(false);
+
+  const haversineDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  const nearestMetro = useMemo(() => {
+    if (!listing.lat || !listing.lng) return null;
+    return METRO_STATIONS.reduce<{ name: string; dist: number } | null>((best, m) => {
+      const d = haversineDistance(listing.lat, listing.lng, m.lat, m.lng);
+      if (!best || d < best.dist) return { name: m.name, dist: d };
+      return best;
+    }, null);
+  }, [listing.lat, listing.lng]);
+
+  const districtAvgPrice = useMemo(() => {
+    if (!listing.lat || !listing.lng || similar.length === 0) return null;
+    const sameDistrict = similar.filter(s => {
+      const d = haversineDistance(listing.lat, listing.lng, s.lat || 0, s.lng || 0);
+      return d < 3 && s.id !== listing.id;
+    });
+    if (sameDistrict.length === 0) return null;
+    const avg = sameDistrict.reduce((sum, s) => sum + s.priceNum, 0) / sameDistrict.length;
+    return { avg, count: sameDistrict.length, cheaper: listing.priceNum < avg };
+  }, [listing.lat, listing.lng, similar, listing.priceNum, listing.id]);
   const gallery = listing.images.length > 0 ? listing.images : [listing.image];
   const amenityMap: Record<string, string> = {
     lift: "Lift",
@@ -73,25 +109,37 @@ function DetailPage({
       api.districtRating(listing.district).then(setDistrictRatingData).catch(() => undefined);
     }
     api.alerts().then(setExistingAlerts).catch(() => undefined);
+    api.propertyReviews(listing.id).then(setReviews).catch(() => {});
   }, [listing.id]);
 
   const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/listing/${listing.id}` : "";
   const shareText = `${listing.title} - ${listing.price}\n${listing.location}`;
 
+  const handleSubmitReview = async () => {
+    try {
+      await api.createReview(listing.id, reviewForm);
+      const updated = await api.propertyReviews(listing.id);
+      setReviews(updated);
+      setShowReviewForm(false);
+      setReviewForm({ safety_rating: 5, infrastructure_rating: 5, transport_rating: 5, comment: "" });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Xatolik");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
-      {/* Breadcrumb */}
+      {/* Back button + breadcrumb */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 text-xs text-gray-400">
-          <button onClick={() => onNav("home")} className="hover:text-green-600 transition-colors">
-            Bosh sahifa
-          </button>
-          <span>/</span>
-          <button onClick={() => onNav("listings")} className="hover:text-green-600 transition-colors">
-            {t("listings")}
-          </button>
-          <span>/</span>
-          <span className="text-gray-600 font-medium">{listing.title}</span>
+        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
+          <BackButton onClick={goBack} />
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <button onClick={() => onNav("home")} className="hover:text-green-600 transition-colors">Bosh sahifa</button>
+            <span>/</span>
+            <button onClick={() => onNav("listings")} className="hover:text-green-600 transition-colors">{t("listings")}</button>
+            <span>/</span>
+            <span className="text-gray-600 font-medium">{listing.title}</span>
+          </div>
         </div>
       </div>
 
@@ -162,10 +210,32 @@ function DetailPage({
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-5">
-                <MapPin size={14} className="text-green-500" />
-                {listing.location}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                  <MapPin size={14} className="text-green-500" />
+                  {listing.location}
+                </div>
+                {nearestMetro && nearestMetro.dist < 3 && (
+                  <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0">
+                    <Train size={13} /> {nearestMetro.name} {Math.round(nearestMetro.dist * 1000)}m
+                  </span>
+                )}
               </div>
+              {districtAvgPrice && (
+                <div className="flex items-center gap-2 mb-4 p-3 bg-orange-50 rounded-xl border border-orange-100">
+                  <Scale size={16} className="text-orange-500 shrink-0" />
+                  <div className="text-xs text-gray-600">
+                    Hududdagi o'rtacha narx: <span className="font-bold">{Math.round(districtAvgPrice.avg).toLocaleString()} so'm</span>
+                    {" · "}
+                    {districtAvgPrice.cheaper ? (
+                      <span className="text-green-600 font-bold">Bu e'londan arzonroq</span>
+                    ) : (
+                      <span className="text-red-500 font-bold">Bu e'londan qimmatroq</span>
+                    )}
+                    <span className="text-gray-400"> ({districtAvgPrice.count} ta e'lon asosida)</span>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-3 md:grid-cols-6 gap-2.5">
                 {[
@@ -368,6 +438,71 @@ function DetailPage({
               </div>
             </div>
 
+            {/* Reviews */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-gray-900">Sharhlar ({reviews.length})</h3>
+                {currentUser && (
+                  <button onClick={() => setShowReviewForm(!showReviewForm)}
+                    className="text-xs font-bold text-green-600 hover:text-green-700 transition-colors">
+                    {showReviewForm ? "Bekor qilish" : "Sharh qoldirish"}
+                  </button>
+                )}
+              </div>
+
+              {showReviewForm && (
+                <div className="mb-4 p-4 bg-gray-50 rounded-xl space-y-3">
+                  {["safety_rating", "infrastructure_rating", "transport_rating"].map((field) => (
+                    <div key={field}>
+                      <label className="text-xs font-semibold text-gray-600 block mb-1">
+                        {field === "safety_rating" ? "Xavfsizlik" : field === "infrastructure_rating" ? "Infratuzilma" : "Transport"}
+                      </label>
+                      <div className="flex gap-1">
+                        {[1,2,3,4,5].map((star) => (
+                          <button key={star} onClick={() => setReviewForm({...reviewForm, [field]: star})}
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-colors ${
+                              star <= reviewForm[field as keyof typeof reviewForm] as number
+                                ? "bg-amber-400 text-white" : "bg-gray-200 text-gray-400"
+                            }`}>
+                            {star}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  <textarea value={reviewForm.comment} onChange={(e) => setReviewForm({...reviewForm, comment: e.target.value})}
+                    placeholder="Sharhingizni yozing..."
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-green-400 resize-none h-20"
+                  />
+                  <button onClick={handleSubmitReview}
+                    className="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">
+                    Yuborish
+                  </button>
+                </div>
+              )}
+
+              {reviews.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-6">Hali sharhlar mavjud emas. Birinchi bo'lib fikringizni qoldiring!</p>
+              ) : (
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {reviews.map((r) => (
+                    <div key={r.id} className="border-b border-gray-50 pb-3 last:border-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-semibold text-gray-900">{r.user_name}</span>
+                        <span className="text-xs text-gray-400">{new Date(r.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-500 mb-1.5">
+                        <span>Xavfsizlik: {"★".repeat(r.safety_rating)}{"☆".repeat(5-r.safety_rating)}</span>
+                        <span>Infra: {"★".repeat(r.infrastructure_rating)}{"☆".repeat(5-r.infrastructure_rating)}</span>
+                        <span>Transport: {"★".repeat(r.transport_rating)}{"☆".repeat(5-r.transport_rating)}</span>
+                      </div>
+                      {r.comment && <p className="text-sm text-gray-700">{r.comment}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Neighborhood Reviews */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5" id="reviews">
               <h2 className="font-bold text-gray-900 mb-4">🏘️ Mahalla reytingi</h2>
@@ -541,7 +676,7 @@ function DetailPage({
                       <BellOff size={15} /> Kuzatilmoqda
                     </div>
                   )}
-                  {currentUser && currentUser.id === listing.ownerId && (
+                  {currentUser && (currentUser.id === listing.ownerId || currentUser.role === "ADMIN") && (
                     <>
                       <button
                         onClick={async () => {
@@ -575,12 +710,12 @@ function DetailPage({
                         <BoostModal
                           propertyId={listing.id}
                           onClose={() => setShowBoost(false)}
-                          onBoosted={() => setShowBoost(false)}
+                          onSuccess={() => setShowBoost(false)}
                         />
                       )}
                     </>
                   )}
-                  {currentUser && currentUser.id === listing.ownerId && (
+                  {currentUser && (currentUser.id === listing.ownerId || currentUser.role === "ADMIN") && (
                     <>
                       <div className="border-t border-gray-100 pt-3 mt-3">
                         <label className="flex items-center justify-between cursor-pointer">
@@ -593,14 +728,18 @@ function DetailPage({
                             className="w-5 h-5 accent-green-600 rounded"
                             onChange={async (e) => {
                               try {
-                                await api.setAutoDecrease(listing.id, e.target.checked, 1);
+                                await api.setAutoDecrease(listing.id, { enabled: e.target.checked, rate: 1 });
                               } catch {}
                             }}
                           />
                         </label>
                       </div>
-                      {(listing.apiStatus !== "sold" && listing.apiStatus !== "rented") && (
-                        <div className="border-t border-gray-100 pt-3 mt-3">
+                      <div className="border-t border-gray-100 pt-3 mt-3 space-y-2">
+                        <button onClick={() => onNav("add", listing.id)}
+                          className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm">
+                          <Edit size={15} /> Tahrirlash
+                        </button>
+                        {(listing.apiStatus !== "sold" && listing.apiStatus !== "rented") && (
                           <button
                             onClick={async () => {
                               const newStatus = listing.status === "sotuv" ? "sold" : "rented";
@@ -618,24 +757,24 @@ function DetailPage({
                           >
                             <CheckCircle size={15} /> {listing.status === "sotuv" ? "Sotilgan deb belgilash" : "Ijaraga berilgan deb belgilash"}
                           </button>
-                          <button
-                            onClick={async () => {
-                              if (confirm("E'lonni o'chirishni tasdiqlaysizmi?")) {
-                                try {
-                                  await api.deleteProperty(listing.id);
-                                  alert("E'lon o'chirildi!");
-                                  window.location.reload();
-                                } catch (err) {
-                                  alert(err instanceof Error ? err.message : "Xatolik");
-                                }
+                        )}
+                        <button
+                          onClick={async () => {
+                            if (confirm("E'lonni o'chirishni tasdiqlaysizmi?")) {
+                              try {
+                                await api.deleteProperty(listing.id);
+                                alert("E'lon o'chirildi!");
+                                window.location.reload();
+                              } catch (err) {
+                                alert(err instanceof Error ? err.message : "Xatolik");
                               }
-                            }}
-                            className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm mt-2"
-                          >
-                            <Trash2 size={15} /> E'lonni o'chirish
-                          </button>
-                        </div>
-                      )}
+                            }
+                          }}
+                          className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm"
+                        >
+                          <Trash2 size={15} /> E'lonni o'chirish
+                        </button>
+                      </div>
                     </>
                   )}
                 </div>
@@ -674,6 +813,31 @@ function DetailPage({
                       Bozor narxi: ~${Math.round(listing.priceNum * 1.15).toLocaleString()}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Expired / Reactivate */}
+              {listing.apiStatus === "expired" && currentUser && currentUser.id === listing.ownerId && (
+                <div className="bg-orange-50 rounded-2xl border border-orange-200 p-4 text-center">
+                  <div className="text-sm font-bold text-orange-800 mb-2">E'lon muddati tugagan</div>
+                  <p className="text-xs text-orange-600 mb-3">E'lonni qayta aktivatsiya qilish orqali 30 kunga uzaytiring.</p>
+                  <button
+                    onClick={async () => {
+                      setReactivating(true);
+                      try {
+                        await api.reactivateProperty(listing.id);
+                        window.location.reload();
+                      } catch (err) {
+                        alert("Aktivatsiya qilib bo'lmadi");
+                      } finally {
+                        setReactivating(false);
+                      }
+                    }}
+                    disabled={reactivating}
+                    className="w-full bg-orange-600 text-white font-bold py-2.5 rounded-xl hover:bg-orange-700 transition-colors text-sm disabled:opacity-50"
+                  >
+                    {reactivating ? "Aktivatsiya qilinmoqda..." : "Qayta aktivatsiya qilish"}
+                  </button>
                 </div>
               )}
 

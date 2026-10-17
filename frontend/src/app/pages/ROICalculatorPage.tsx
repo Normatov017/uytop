@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { TrendingUp, DollarSign, Calendar, Banknote, Percent, ArrowRight } from "lucide-react";
 import type { Page } from "../types";
+import BackButton from "../components/BackButton";
 
-export default function ROICalculatorPage({ onNav }: { onNav: (p: Page) => void }) {
+export default function ROICalculatorPage({ onNav, goBack }: { onNav: (p: Page) => void; goBack: () => void }) {
   const [price, setPrice] = useState(80000);
   const [renovation, setRenovation] = useState(5000);
   const [rentPrice, setRentPrice] = useState(500);
@@ -31,6 +32,7 @@ export default function ROICalculatorPage({ onNav }: { onNav: (p: Page) => void 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-5xl mx-auto px-4">
+          <BackButton onClick={goBack} />
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
             <TrendingUp size={20} className="text-white" />

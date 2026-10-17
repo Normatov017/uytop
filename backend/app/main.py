@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from jose import JWTError, jwt
 
 from app.core.config import settings
-from app.routers import admin, agent_reviews, agents, auth, bookings, buildings, chat, favorites, inquiries, otp, price_alerts, price_history, properties, reviews, saved_searches, uploads, users
+from app.routers import admin, agent_reviews, agents, auth, bookings, buildings, chat, favorites, inquiries, notifications, otp, price_alerts, price_history, properties, reviews, saved_searches, uploads, users
 from app.routers import analytics as analytics_router
 from app.routers import boost as boost_router
 from app.routers import translations as translations_router
@@ -79,6 +79,7 @@ app.include_router(referrals_router.router, prefix="/api")
 app.include_router(qr_router.router, prefix="/api")
 app.include_router(report_router.router, prefix="/api")
 app.include_router(social_post_router.router, prefix="/api")
+app.include_router(notifications.router, prefix="/api")
 
 
 @app.websocket("/api/ws/{user_id}")

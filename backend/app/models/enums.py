@@ -45,3 +45,4 @@ class PropertyStatus(str, enum.Enum):
     rejected = "rejected"
     sold = "sold"
     rented = "rented"
+    expired = "expired"

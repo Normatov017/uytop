@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import bcrypt
 from jose import jwt
+from passlib.exc import UnknownHashError
 from passlib.context import CryptContext
 
 from app.core.config import settings
@@ -11,7 +13,12 @@ pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto", pbkdf2_
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except UnknownHashError:
+        if hashed_password.startswith(("$2a$", "$2b$", "$2y$")):
+            return bcrypt.checkpw(plain_password[:72].encode("utf-8"), hashed_password.encode("utf-8"))
+        return False
 
 
 def get_password_hash(password: str) -> str:

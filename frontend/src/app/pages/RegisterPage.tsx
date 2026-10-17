@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, ChevronDown, Star, Target, ArrowRight, Check } from "lucide-react";
 import { api } from "../../lib/api";
 import type { ApiUser, UserRole } from "../../lib/types";
@@ -7,8 +7,9 @@ import { REGIONS } from "../types";
 import { savePreferences } from "../../lib/storage";
 import type { BuyerPreferences } from "../../lib/storage";
 import { t } from "../../lib/i18n";
+import BackButton from "../components/BackButton";
 
-export default function RegisterPage({ onNav, onAuth }: { onNav: (p: Page) => void; onAuth: (user: ApiUser) => void }) {
+export default function RegisterPage({ onNav, onAuth, goBack }: { onNav: (p: Page) => void; onAuth: (user: ApiUser) => void; goBack: () => void }) {
   const [step, setStep] = useState<"register" | "onboarding">("register");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("");
@@ -20,12 +21,76 @@ export default function RegisterPage({ onNav, onAuth }: { onNav: (p: Page) => vo
   const [prefs, setPrefs] = useState<BuyerPreferences>({});
   const [onboardStep, setOnboardStep] = useState(0);
 
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
   const roleMap: Record<string, UserRole> = {
     user: "USER",
     owner: "OWNER",
     agent: "AGENT",
     developer: "DEVELOPER",
   };
+
+  useEffect(() => {
+    (window as any).onTelegramAuth = async (user: any) => {
+      try {
+        setLoading(true);
+        setError("");
+        const result = await api.telegramAuth({
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name || "",
+          username: user.username || "",
+          photo_url: user.photo_url || "",
+          auth_date: user.auth_date,
+          hash: user.hash,
+        });
+        api.saveToken(result.access_token);
+        onAuth(result.user);
+        onNav("dashboard");
+      } catch {
+        setError("Telegram orqali kirishda xatolik");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    (window as any).handleGoogleCredential = async (response: any) => {
+      try {
+        setLoading(true);
+        setError("");
+        const result = await api.googleAuth(response.credential);
+        api.saveToken(result.access_token);
+        onAuth(result.user);
+        onNav("dashboard");
+      } catch {
+        setError("Google orqali kirishda xatolik");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (googleClientId) {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.onload = () => {
+        if (window.google?.accounts?.id) {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: window.handleGoogleCredential,
+          });
+          window.google.accounts.id.renderButton(
+            document.getElementById("google-signin-btn-reg"),
+            { theme: "outline", size: "large", width: "100%", text: "signin_with", shape: "pill" }
+          );
+        }
+      };
+      document.body.appendChild(script);
+      return () => {
+        if (script.parentNode) script.parentNode.removeChild(script);
+      };
+    }
+  }, []);
 
   const normalizedPhone = phone.startsWith("+998") ? phone : `+998${phone.replace(/\D/g, "")}`;
 
@@ -134,6 +199,7 @@ export default function RegisterPage({ onNav, onAuth }: { onNav: (p: Page) => vo
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
+        <BackButton onClick={goBack} />
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-5">
             <div className="w-12 h-12 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -200,6 +266,34 @@ export default function RegisterPage({ onNav, onAuth }: { onNav: (p: Page) => vo
               Hisobingiz bormi?{" "}
               <button onClick={() => onNav("login")} className="text-green-600 font-bold hover:text-green-700">{t("login")}</button>
             </p>
+            <div className="flex items-center my-4 gap-3">
+              <div className="flex-1 border-t border-gray-200" />
+              <span className="text-xs text-gray-400">yoki</span>
+              <div className="flex-1 border-t border-gray-200" />
+            </div>
+            <div className="flex gap-3">
+              {googleClientId ? (
+                <div id="google-signin-btn-reg" className="flex-1"></div>
+              ) : (
+                <button disabled className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-400 flex items-center justify-center gap-2 cursor-not-allowed">
+                  <span className="font-extrabold text-blue-300">G</span> Google
+                </button>
+              )}
+              <button onClick={() => {
+                setLoading(true);
+                const script = document.createElement("script");
+                script.src = "https://telegram.org/js/telegram-widget.js?22";
+                script.setAttribute("data-telegram-login", "Uymapbot");
+                script.setAttribute("data-size", "large");
+                script.setAttribute("data-onauth", "onTelegramAuth(user)");
+                script.setAttribute("data-request-access", "write");
+                script.async = true;
+                document.body.appendChild(script);
+              }} disabled={loading}
+                className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors disabled:opacity-50">
+                <span className="font-extrabold text-blue-400">T</span> {loading ? "Telegram..." : "Telegram"}
+              </button>
+            </div>
           </div>
         )}
 

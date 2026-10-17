@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Calendar, Check, X, Clock, CreditCard } from "lucide-react";
 import { api } from "../../lib/api";
 import type { Page } from "../types";
+import BackButton from "../components/BackButton";
 
 interface Booking {
   id: number; property_id: number; property_title: string;
@@ -16,7 +17,7 @@ const statusStyles: Record<string, { label: string; color: string }> = {
   expired: { label: "Muddati o'tgan", color: "bg-gray-100 text-gray-500" },
 };
 
-export default function BookingsPage({ onNav }: { onNav: (p: Page) => void }) {
+export default function BookingsPage({ onNav, goBack }: { onNav: (p: Page) => void; goBack: () => void }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +48,8 @@ export default function BookingsPage({ onNav }: { onNav: (p: Page) => void }) {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="flex items-center gap-3 mb-6">
+        <BackButton onClick={goBack} />
+        <div className="flex items-center gap-3 mb-6 mt-4">
           <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
             <Calendar size={20} className="text-white" />
           </div>

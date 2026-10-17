@@ -1,4 +1,5 @@
 import type {
+  AdminDashboard,
   AdminStats,
   ApiProperty,
   ApiUser,
@@ -101,6 +102,10 @@ export const api = {
     return request<ApiProperty[]>(`/properties/${id}/similar`);
   },
 
+  reactivateProperty(id: number) {
+    return request<ApiProperty>(`/properties/${id}/reactivate`, { method: "POST" });
+  },
+
   // Price alerts
   alerts() {
     return request<{ id: number; property_id: number; property_title: string; current_price: number; target_price: number | null; notified: boolean }[]>("/alerts");
@@ -151,6 +156,20 @@ export const api = {
     });
   },
 
+  telegramAuth(data: Record<string, unknown>) {
+    return request<{ access_token: string; user: ApiUser }>("/auth/telegram", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  googleAuth(credential: string) {
+    return request<{ access_token: string; user: ApiUser }>("/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ credential }),
+    });
+  },
+
   register(payload: {
     full_name: string;
     phone: string;
@@ -189,6 +208,10 @@ export const api = {
     return request<AdminStats>("/admin/stats");
   },
 
+  adminDashboard() {
+    return request<AdminDashboard>("/analytics/dashboard");
+  },
+
   adminProperties() {
     return request<ApiProperty[]>("/admin/properties");
   },
@@ -202,6 +225,10 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
+  },
+
+  blockUser(userId: number) {
+    return request<{ ok: boolean; is_blocked: boolean }>(`/admin/users/${userId}/block`, { method: "PATCH" });
   },
 
   // Chat
@@ -324,30 +351,36 @@ export const api = {
   },
 
   // Boost
+  boost: {
+    create(data: { property_id: number; days: number; price_paid: number; currency: string }) {
+      return request<{ id: number; property_id: number; days: number; expires_at: string; is_active: boolean }>("/boost", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    active() {
+      return request<{ id: number; property_id: number; days: number; expires_at: string; is_active: boolean }[]>("/boost/active");
+    },
+  },
   createBoost(property_id: number, days: number, price_paid: number) {
     return request<BoostData>("/boost", {
       method: "POST",
       body: JSON.stringify({ property_id, days, price_paid, currency: "USD" }),
     });
   },
-  activeBoosts() {
-    return request<BoostData[]>("/boost/active");
-  },
-
-  // Auto decrease
-  setAutoDecrease(property_id: number, enabled: boolean, rate?: number) {
-    return request<{ id: number; auto_decrease_enabled: boolean; auto_decrease_rate: number | null }>(
-      `/properties/${property_id}/auto-decrease`,
-      { method: "PUT", body: JSON.stringify({ enabled, rate }) }
-    );
-  },
-
-  // View stats
-  viewStats(property_id: number) {
-    return request<ViewStatsResponse>(`/view-stats/${property_id}`);
-  },
 
   // Analytics
+  analytics: {
+    marketSummary() {
+      return request<{ total_listings: number; avg_price: number | null; avg_price_per_m2: number | null; by_district: { district: string; listings_count: number; avg_price: number | null; avg_price_per_m2: number | null }[] }>("/analytics/market-summary");
+    },
+    districtAnalytics(district: string) {
+      return request<{ district: string; avg_price: number | null; avg_price_per_m2: number | null; listings_count: number; price_trends: { month: string; avg_price: number | null }[] }>(`/analytics/district/${encodeURIComponent(district)}`);
+    },
+    priceTrends() {
+      return request<{ month: string; avg_price: number | null }[]>("/analytics/price-trends");
+    },
+  },
   marketSummary() {
     return request<MarketSummary>("/analytics/market-summary");
   },
@@ -358,9 +391,22 @@ export const api = {
     return request<PriceTrend[]>("/analytics/price-trends");
   },
 
+  // View stats
+  viewStats(propertyId: number) {
+    return request<{ views_count: number; phone_clicks: number; telegram_clicks: number; recent_views: { date: string; count: number }[]; unique_viewers: number }>(`/view-stats/${propertyId}`);
+  },
+
+  // Auto decrease
+  setAutoDecrease(propertyId: number, data: { enabled: boolean; rate?: number | null }) {
+    return request<{ id: number; auto_decrease_enabled: boolean; auto_decrease_rate: number | null }>(`/properties/${propertyId}/auto-decrease`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
   // Translations
   translations(lang: string) {
-    return request<TranslationMap>(`/translations?lang=${lang}`);
+    return request<Record<string, string>>(`/translations?lang=${lang}`);
   },
 
   // Social Post
@@ -404,6 +450,16 @@ export const api = {
     return request<{ id: number; referred_name: string; status: string; bonus_earned: number; created_at: string }[]>("/referrals/my-referrals");
   },
 
+  // Notifications
+  notifications() {
+    return request<{ id: number; type: string; title: string; message: string; is_read: boolean; link: string | null; created_at: string }[]>("/notifications");
+  },
+  notificationUnreadCount() {
+    return request<{ unread: number }>("/notifications/unread-count");
+  },
+  markNotificationRead(id: number) {
+    return request<{ ok: boolean }>(`/notifications/${id}/read`, { method: "PATCH" });
+  },
   // Report
   reportUrl: `${API_BASE_URL}/report/property-sales`,
 };

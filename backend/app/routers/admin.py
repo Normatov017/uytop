@@ -81,3 +81,13 @@ def unverify_company(company_id: int, db: DbSession) -> dict:
     profile.is_verified = False
     db.commit()
     return {"ok": True, "message": "Tasdiqlash bekor qilindi"}
+
+
+@router.patch("/users/{user_id}/block")
+def block_user(user_id: int, db: DbSession) -> dict:
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(404, "User not found")
+    user.is_blocked = not user.is_blocked
+    db.commit()
+    return {"ok": True, "is_blocked": user.is_blocked}

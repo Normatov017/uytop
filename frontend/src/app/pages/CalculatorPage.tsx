@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Calculator, DollarSign, Landmark, Calendar, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import type { Page } from "../types";
+import BackButton from "../components/BackButton";
 
 const BANKS = [
   { name: "Ipoteka bank", rate: 14 },
@@ -19,7 +20,7 @@ function annuityPayment(principal: number, monthlyRate: number, months: number):
   return principal * (monthlyRate * factor) / (factor - 1);
 }
 
-export default function CalculatorPage({ onNav }: { onNav: (p: Page) => void }) {
+export default function CalculatorPage({ onNav, goBack }: { onNav: (p: Page) => void; goBack: () => void }) {
   const [priceUsd, setPriceUsd] = useState(80000);
   const [downPercent, setDownPercent] = useState(20);
   const [years, setYears] = useState(10);
@@ -70,6 +71,7 @@ export default function CalculatorPage({ onNav }: { onNav: (p: Page) => void }) 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-5xl mx-auto px-4">
+          <BackButton onClick={goBack} />
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
             <Calculator size={20} className="text-white" />

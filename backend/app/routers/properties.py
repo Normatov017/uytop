@@ -1,7 +1,6 @@
 from decimal import Decimal
 
-from fastapi import APIRouter, Query, Request, Response, status
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 from sqlalchemy import select, update
 
 from app.core.deps import CurrentUser, DbSession
@@ -22,10 +21,6 @@ from app.services.property_service import (
     update_property,
 )
 
-
-class AutoDecreaseConfig(BaseModel):
-    enabled: bool
-    rate: float | None = None
 
 router = APIRouter(prefix="/properties", tags=["properties"])
 
@@ -69,6 +64,7 @@ def featured_properties(db: DbSession, limit: int = Query(8, ge=1, le=24)) -> li
 def map_properties(db: DbSession) -> list[Property]:
     stmt = select(Property).where(
         Property.status == PropertyStatus.active,
+        Property.status != PropertyStatus.expired,
         Property.latitude.is_not(None),
         Property.longitude.is_not(None),
     )
@@ -153,19 +149,16 @@ def update(property_id: int, payload: PropertyUpdate, db: DbSession, current_use
     return update_property(db, prop, payload)
 
 
-@router.put("/{property_id}/auto-decrease")
-def set_auto_decrease(property_id: int, body: AutoDecreaseConfig, db: DbSession, current_user: CurrentUser):
+@router.post("/{property_id}/reactivate", response_model=PropertyRead)
+def reactivate(property_id: int, db: DbSession, current_user: CurrentUser) -> Property:
+    from app.services.price_scheduler import reactivate_property
     prop = get_property_or_404(db, property_id)
-    ensure_owner_or_admin(prop, current_user)
-    prop.auto_decrease_enabled = body.enabled
-    prop.auto_decrease_rate = body.rate
-    db.commit()
+    if prop.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Faqat egasi aktivatsiya qila oladi")
+    if not reactivate_property(property_id):
+        raise HTTPException(status_code=400, detail="Aktivatsiya qilib bo'lmadi")
     db.refresh(prop)
-    return {
-        "id": prop.id,
-        "auto_decrease_enabled": prop.auto_decrease_enabled,
-        "auto_decrease_rate": prop.auto_decrease_rate,
-    }
+    return prop
 
 
 @router.delete("/{property_id}", status_code=status.HTTP_204_NO_CONTENT)

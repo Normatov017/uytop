@@ -30,6 +30,8 @@ services:
       sh -c "alembic upgrade head &&
              python -m app.seed &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    environment:
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
 
 volumes:
   postgres_data:

@@ -17,11 +17,12 @@ from app.models.agent_review import AgentReview
 from app.models.boost import PropertyBoost
 from app.models.crm import Client, Appointment, CrmNote, Payment, PropertyViewing
 from app.models.referral import Referral
+from app.models.notification import Notification
 
 __all__ = [
     "Favorite", "Inquiry", "OTP", "Property", "PropertyImage", "Report", "User", "ViewLog",
     "ChatConversation", "ChatMessage", "Building", "ApartmentUnit", "CompanyProfile", "Booking",
     "NeighborhoodReview", "PriceAlert", "PriceHistory", "SavedSearch", "AgentReview",
     "PropertyBoost", "Client", "Appointment", "CrmNote", "Payment", "PropertyViewing",
-    "Referral",
+    "Referral", "Notification",
 ]

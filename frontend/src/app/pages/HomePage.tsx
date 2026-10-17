@@ -19,6 +19,7 @@ function HomePage({
   toggleFav: (id: number) => void;
 }) {
   const [activeTab, setActiveTab] = useState("Sotib olish");
+  const [smartSearch, setSmartSearch] = useState("");
   const tabs = ["Sotib olish", "Ijaraga olish", "Kunlik ijara", t("new_buildings")];
   const recentlyViewed = getRecentlyViewed();
   const prefs = getPreferences();
@@ -39,6 +40,12 @@ function HomePage({
     : [];
 
   const recentListings = listings.filter((l) => recentlyViewed.includes(l.id));
+  const submitSearch = (value = smartSearch) => {
+    localStorage.setItem("uymap_header_search", value);
+    const op = activeTab === "Ijaraga olish" || activeTab === "Kunlik ijara" ? "rent" : "sale";
+    localStorage.setItem("uymap_op_filter", op);
+    onNav("listings");
+  };
 
   return (
     <div>
@@ -53,14 +60,14 @@ function HomePage({
 
         <div className="relative max-w-4xl mx-auto px-4 py-16 w-full text-center">
           <div className="inline-flex items-center gap-2 bg-green-600/20 border border-green-500/30 text-green-400 text-xs font-semibold px-3 py-1.5 rounded-full mb-5">
-            <CheckCircle size={12} /> 5,200+ tekshirilgan e'lon
+            <CheckCircle size={12} /> Faqat egasidan · 0% komissiya
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4 leading-tight">
-            Orzuyingizdagi uyni <br />
-            <span className="text-green-400">O'zbekistonda toping</span>
+            Maklersiz uy toping <br />
+            <span className="text-green-400">egasi bilan bevosita</span>
           </h1>
           <p className="text-gray-300 text-lg mb-9">
-            Toshkent va butun O'zbekiston bo'ylab tekshirilgan e'lonlar — xaritada, qulay va ishonchli
+            2-3 clickda: tuman, budjet va xona sonini yozing. UyMap faqat egasidan e'lonlarni ko'rsatadi.
           </p>
 
           {/* Search box */}
@@ -69,7 +76,16 @@ function HomePage({
               {tabs.map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    if (tab === "Yangi qurilish" || tab === t("new_buildings")) {
+                      onNav("public-buildings");
+                    } else {
+                      const op = tab === "Ijaraga olish" || tab === "Kunlik ijara" ? "rent" : "sale";
+                      localStorage.setItem("uymap_op_filter", op);
+                      onNav("listings");
+                    }
+                  }}
                   className={`flex-1 py-3.5 text-xs md:text-sm font-semibold transition-colors ${
                     activeTab === tab
                       ? "text-green-600 border-b-2 border-green-600"
@@ -86,21 +102,27 @@ function HomePage({
                   <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Shahar, tuman yoki manzil kiriting"
+                    placeholder="Masalan: Chilonzor 2 xona 70000 gacha"
+                    value={smartSearch}
+                    onChange={(e) => setSmartSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") submitSearch();
+                    }}
                     className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-green-500 transition-colors bg-gray-50 focus:bg-white"
                   />
                 </div>
                 <button
-                  onClick={() => onNav("listings")}
+                  onClick={() => submitSearch()}
                   className="bg-green-600 hover:bg-green-700 text-white font-bold px-7 py-3 rounded-xl transition-colors text-sm"
                 >
-                  {t("search")}
+                  Egasidan topish
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {[t("price"), t("rooms"), t("area"), t("district")].map((f) => (
+                {["Yunusobod 2 xona", "Chilonzor 500$ gacha", "Metro yaqin", "3 xona sotuv", "Sergeli ijara"].map((f) => (
                   <button
                     key={f}
+                    onClick={() => submitSearch(f)}
                     className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-green-400 hover:text-green-600 transition-colors"
                   >
                     {f} <ChevronDown size={11} />
@@ -264,7 +286,7 @@ function HomePage({
               {
                 icon: MessageCircle,
                 title: "Tez aloqa",
-                desc: "Egasi yoki agent bilan to'g'ridan-to'g'ri Telegram orqali bog'laning",
+                desc: "Maklersiz, komissiyasiz egasi bilan to'g'ridan-to'g'ri bog'laning",
                 iconCls: "text-purple-600",
                 bgCls: "bg-purple-50",
               },
@@ -289,10 +311,10 @@ function HomePage({
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { num: "5,200+", label: "Aktiv e'lonlar" },
-              { num: "3,800+", label: "Sotilgan mulklar" },
-              { num: "12,000+", label: "Foydalanuvchilar" },
-              { num: "450+", label: "Agentlar" },
+              { num: "0%", label: "Makler komissiyasi" },
+              { num: "3 qadam", label: "Uy topish oqimi" },
+              { num: "24 soat", label: "Moderatsiya" },
+              { num: "100%", label: "Egasidan aloqa" },
             ].map(({ num, label }) => (
               <div key={label} className="text-center">
                 <div className="text-3xl font-extrabold text-green-600 mb-1">{num}</div>

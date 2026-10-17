@@ -16,6 +16,13 @@ export default function LocationPicker({ lat, lng, onChange }: LocationPickerPro
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
+    const markerIcon = L.divIcon({
+      className: "",
+      html: '<div style="width:28px;height:28px;border-radius:9999px;background:#16a34a;border:3px solid white;box-shadow:0 8px 24px rgba(22,163,74,.35);position:relative"><div style="position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:9999px;background:white;transform:translate(-50%,-50%)"></div></div>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    });
+
     const map = L.map(mapRef.current, {
       center: [lat, lng],
       zoom: 15,
@@ -27,7 +34,7 @@ export default function LocationPicker({ lat, lng, onChange }: LocationPickerPro
       maxZoom: 19,
     }).addTo(map);
 
-    const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    const marker = L.marker([lat, lng], { draggable: true, icon: markerIcon }).addTo(map);
     markerRef.current = marker;
 
     marker.on("dragend", () => {
@@ -41,6 +48,7 @@ export default function LocationPicker({ lat, lng, onChange }: LocationPickerPro
     });
 
     mapInstance.current = map;
+    setTimeout(() => map.invalidateSize(), 100);
 
     return () => {
       map.remove();
@@ -59,10 +67,15 @@ export default function LocationPicker({ lat, lng, onChange }: LocationPickerPro
   }, [lat, lng]);
 
   return (
-    <div
-      ref={mapRef}
-      className="w-full h-72 rounded-xl border border-gray-200 overflow-hidden"
-      style={{ zIndex: 1 }}
-    />
+    <div className="relative">
+      <div
+        ref={mapRef}
+        className="w-full h-72 rounded-xl border border-gray-200 overflow-hidden"
+        style={{ zIndex: 1 }}
+      />
+      <div className="absolute left-3 top-3 z-[500] rounded-xl bg-white/95 px-3 py-2 text-xs font-semibold text-gray-700 shadow">
+        Xaritani bosing yoki yashil markerni sudrang
+      </div>
+    </div>
   );
 }

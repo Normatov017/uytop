@@ -2,10 +2,19 @@ import { useState, useCallback, useEffect } from "react";
 import { Search, Map, SlidersHorizontal, MapPin, BookmarkPlus, X, ChevronDown } from "lucide-react";
 import { api } from "../../lib/api";
 import type { Listing, Page } from "../types";
-import { REGIONS, METRO_STATIONS } from "../types";
+import { REGIONS, METRO_STATIONS, UNIVERSITIES } from "../types";
 import PropertyCard from "../components/PropertyCard";
-import { fetchUzsRate } from "../utils";
+import { fetchUzsRate, toListing } from "../utils";
 import { t } from "../../lib/i18n";
+import BackButton from "../components/BackButton";
+
+const haversineDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
 
 const PROPERTY_TYPES = [
   "Barchasi", "Kvartira", "Uy", "Yangi bino", "Tijoriy", "Yer", "Studio", "Duplex",
@@ -28,18 +37,22 @@ const TYPE_MAP: Record<string, string> = {
 
 function ListingsPage({
   onNav,
+  goBack,
   listings,
   favorites,
   toggleFav,
   ownerFilter,
   onClearOwnerFilter,
+  operationFilter,
 }: {
   onNav: (p: Page, id?: number) => void;
+  goBack: () => void;
   listings: Listing[];
   favorites: number[];
   toggleFav: (id: number) => void;
   ownerFilter?: number | null;
   onClearOwnerFilter?: () => void;
+  operationFilter?: string | null;
 }) {
   const [sortBy, setSortBy] = useState("Eng yangi");
   const [searchText, setSearchText] = useState("");
@@ -50,24 +63,42 @@ function ListingsPage({
   const [maxPrice, setMaxPrice] = useState("");
   const [roomsFilter, setRoomsFilter] = useState("");
   const [filterMetro, setFilterMetro] = useState("");
+  const [filterUniversity, setFilterUniversity] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [showInUzs, setShowInUzs] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [showSave, setShowSave] = useState(false);
-  const [filterType, setFilterType] = useState("Any Property");
+  const [filterType, setFilterType] = useState("Barchasi");
   const [facilities, setFacilities] = useState<string[]>([]);
   const [minArea, setMinArea] = useState("");
   const [maxArea, setMaxArea] = useState("");
   const [showSidebar, setShowSidebar] = useState(false);
   const [pageNum, setPageNum] = useState(1);
+  const [apiResults, setApiResults] = useState<Listing[] | null>(null);
+  const [apiTotal, setApiTotal] = useState(0);
+  const [apiLoading, setApiLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const perPage = 12;
+  const applySmartSearch = (value: string) => {
+    setSearchText(value);
+    const lower = value.toLowerCase();
+    const roomMatch = lower.match(/(\d+)\s*xona/);
+    const maxMatch = lower.match(/(\d[\d\s,.]*)\s*(\$|usd|gacha)/);
+    const knownDistrict = Object.values(REGIONS).flat().find((district) => lower.includes(district.toLowerCase()));
+    if (roomMatch) setRoomsFilter(roomMatch[1]);
+    if (maxMatch) setMaxPrice(maxMatch[1].replace(/[^\d]/g, ""));
+    if (knownDistrict) setFilterDistrict(knownDistrict);
+    if (lower.includes("ijara")) setFilterStatus("rent");
+    if (lower.includes("sotuv") || lower.includes("sotib")) setFilterStatus("sale");
+    if (lower.includes("metro")) setFilterMetro("Chilonzor");
+  };
 
-  useEffect(() => { setPageNum(1); }, [searchText, selectedRegion, filterDistrict, filterStatus, minPrice, maxPrice, roomsFilter, filterMetro, verifiedOnly, filterType, facilities, minArea, maxArea]);
+  useEffect(() => { setPageNum(1); }, [searchText, selectedRegion, filterDistrict, filterStatus, minPrice, maxPrice, roomsFilter, filterMetro, filterUniversity, verifiedOnly, filterType, facilities, minArea, maxArea]);
 
   useEffect(() => {
     const headerSearch = localStorage.getItem("uymap_header_search");
     if (headerSearch) {
-      setSearchText(headerSearch);
+      applySmartSearch(headerSearch);
       localStorage.removeItem("uymap_header_search");
     }
     const applied = localStorage.getItem("uymap_applied_filters");
@@ -88,6 +119,49 @@ function ListingsPage({
     }
   }, []);
 
+  useEffect(() => {
+    const op = operationFilter || localStorage.getItem("uymap_op_filter") || "";
+    if (op === "sale" || op === "rent") setFilterStatus(op);
+    else setFilterStatus("");
+    setPageNum(1);
+  }, [operationFilter]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params: Record<string, string | number | boolean | undefined> = {
+        limit: 12,
+        page: pageNum,
+      };
+      if (searchText) params.search = searchText;
+      if (filterStatus) {
+        params.operation_type = filterStatus;
+      }
+      if (minPrice) params.min_price = minPrice;
+      if (maxPrice) params.max_price = maxPrice;
+      if (roomsFilter) params.rooms = roomsFilter;
+      if (filterDistrict) params.district = filterDistrict;
+      if (filterMetro) params.metro_station = filterMetro;
+      if (verifiedOnly) params.is_verified = true;
+      params.sort = sortBy === "cheapest" ? "cheapest" : sortBy === "expensive" ? "expensive" : sortBy === "popular" ? "popular" : "newest";
+      
+      setApiLoading(true);
+      api.properties(params)
+        .then((result) => {
+          const sorted = result.items.map(toListing).sort((a, b) => {
+            if (a.isPremium !== b.isPremium) return a.isPremium ? -1 : 1;
+            return 0;
+          });
+          setApiResults(sorted);
+          setApiTotal(result.total ?? result.items.length);
+        })
+        .catch(() => {
+          setApiResults(null);
+        })
+        .finally(() => setApiLoading(false));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchText, filterType, filterStatus, minPrice, maxPrice, roomsFilter, filterDistrict, filterMetro, verifiedOnly, sortBy, pageNum, listings]);
+
   const toggleCurrency = useCallback(() => {
     if (!showInUzs) fetchUzsRate().catch(() => undefined);
     setShowInUzs((prev) => !prev);
@@ -99,8 +173,9 @@ function ListingsPage({
 
   const clearAll = () => {
     setSearchText(""); setSelectedRegion(""); setFilterDistrict(""); setFilterStatus("");
+    localStorage.removeItem("uymap_op_filter");
     setMinPrice(""); setMaxPrice(""); setRoomsFilter("");
-    setFilterMetro(""); setVerifiedOnly(false);
+    setFilterMetro(""); setFilterUniversity(""); setVerifiedOnly(false);
     setFilterType("Barchasi"); setFacilities([]);
     setMinArea(""); setMaxArea("");
     setPageNum(1);
@@ -109,9 +184,9 @@ function ListingsPage({
   const onFilterChange = () => setPageNum(1);
 
   const activeFilterCount = [
-    minPrice, maxPrice, roomsFilter, filterDistrict, filterMetro,
-    filterStatus, filterType !== "Barchasi" ? filterType : null,
-    ...facilities, minArea, maxArea, verifiedOnly,
+    minPrice, maxPrice, roomsFilter, filterDistrict, filterMetro, filterUniversity,
+    filterType !== "Barchasi" ? filterType : null,
+    filterStatus, ...facilities, minArea, maxArea, verifiedOnly,
   ].filter(Boolean).length;
 
   const filtered = listings.filter((l) => {
@@ -121,8 +196,15 @@ function ListingsPage({
     if (selectedRegion && l.region !== selectedRegion) return false;
     if (filterDistrict && l.district !== filterDistrict) return false;
     if (filterMetro && l.metroStation !== filterMetro) return false;
-    const STATUS_MAP: Record<string, string> = { sale: "sotuv", rent: "ijara" };
-    if (filterStatus && l.status !== STATUS_MAP[filterStatus]) return false;
+    if (filterUniversity) {
+      const uni = UNIVERSITIES.find((u) => u.name === filterUniversity);
+      if (uni && l.lat && l.lng) {
+        const dist = haversineDistance(uni.lat, uni.lng, l.lat, l.lng);
+        if (dist > 2) return false;
+      }
+    }
+    if (filterStatus === "rent" && l.status !== "ijara") return false;
+    if (filterStatus === "sale" && l.status !== "sotuv") return false;
     if (minPrice && l.priceNum < Number(minPrice)) return false;
     if (maxPrice && l.priceNum > Number(maxPrice)) return false;
     if (roomsFilter) {
@@ -136,13 +218,23 @@ function ListingsPage({
     if (maxArea && l.area > Number(maxArea)) return false;
     return true;
   }).sort((a, b) => {
+    if (a.isPremium !== b.isPremium) return a.isPremium ? -1 : 1;
     if (sortBy === "Eng arzon") return a.priceNum - b.priceNum;
     if (sortBy === "Eng qimmat") return b.priceNum - a.priceNum;
     if (sortBy === "Ko'p ko'rilgan") return b.views - a.views;
     return b.id - a.id;
   });
-  const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((pageNum - 1) * perPage, pageNum * perPage);
+  const displayListingsRaw = apiResults ?? paginated;
+  const displayListings = filterUniversity
+    ? displayListingsRaw.filter((l) => {
+        const uni = UNIVERSITIES.find((u) => u.name === filterUniversity);
+        if (!uni || !l.lat || !l.lng) return false;
+        return haversineDistance(uni.lat, uni.lng, l.lat, l.lng) <= 2;
+      })
+    : displayListingsRaw;
+  const totalCount = apiTotal > 0 ? apiTotal : filtered.length;
+  const totalPages = Math.ceil(totalCount / perPage);
 
   const FilterSection = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="mb-5">
@@ -258,7 +350,18 @@ function ListingsPage({
           <select value={filterMetro} onChange={(e) => setFilterMetro(e.target.value)}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 bg-white appearance-none cursor-pointer">
             <option value="">Har qanday</option>
-            {METRO_STATIONS.map((m) => <option key={m}>{m}</option>)}
+            {METRO_STATIONS.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+          </select>
+          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        </div>
+      </FilterSection>
+
+      <FilterSection label="Universitetga yaqin">
+        <div className="relative">
+          <select value={filterUniversity} onChange={(e) => setFilterUniversity(e.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 bg-white appearance-none cursor-pointer">
+            <option value="">Istalgan</option>
+            {UNIVERSITIES.map((u) => <option key={u.name} value={u.name}>{u.name}</option>)}
           </select>
           <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         </div>
@@ -280,10 +383,14 @@ function ListingsPage({
     </div>
   );
 
+  const allPlaces = [...Object.keys(REGIONS), ...Object.values(REGIONS).flat()];
+  const suggestions = searchText ? allPlaces.filter(p => p.toLowerCase().includes(searchText.toLowerCase())).slice(0, 8) : [];
+
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
       <div className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center gap-3">
+          <BackButton onClick={goBack} />
           <button className="md:hidden p-2 border border-gray-200 rounded-lg" onClick={() => setShowSidebar(true)}>
             <SlidersHorizontal size={16} />
           </button>
@@ -291,7 +398,19 @@ function ListingsPage({
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input type="text" placeholder="Shahar, tuman yoki manzil kiriting" value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-200 bg-gray-50 focus:bg-white transition-all" />
+            {showSuggestions && searchText && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto">
+                {suggestions.map((s, i) => (
+                  <button key={i} onClick={() => { setSearchText(s); setShowSuggestions(false); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <button onClick={() => setShowSave(true)}
             className="hidden md:flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-600 hover:border-green-500 transition-colors">
@@ -348,7 +467,7 @@ function ListingsPage({
               </div>
             )}
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-gray-600"><span className="font-bold text-gray-900">{filtered.length}</span> ta e'lon</p>
+              <p className="text-sm text-gray-600"><span className="font-bold text-gray-900">{totalCount}</span> ta e'lon</p>
               <div className="flex items-center gap-2">
                 <button onClick={toggleCurrency}
                   className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition-colors ${
@@ -366,7 +485,7 @@ function ListingsPage({
               </div>
             </div>
 
-            {filtered.length === 0 ? (
+            {displayListings.length === 0 ? (
               <div className="text-center py-24">
                 <Search size={44} className="text-gray-200 mx-auto mb-4" />
                 <h3 className="font-semibold text-gray-700 mb-1">E'lon topilmadi</h3>
@@ -375,7 +494,7 @@ function ListingsPage({
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {paginated.map((l) => (
+                  {displayListings.map((l) => (
                     <PropertyCard key={l.id} listing={l} onView={() => onNav("detail", l.id)}
                       onFav={() => toggleFav(l.id)} isFav={favorites.includes(l.id)} displayInUzs={showInUzs} />
                   ))}

@@ -3,8 +3,9 @@ import { Cpu, MapPin, Home, Layers, Ruler, Info, CheckCircle2, XCircle } from "l
 import type { Page } from "../types";
 import type { AVMEstimate } from "../../lib/types";
 import { t } from "../../lib/i18n";
+import BackButton from "../components/BackButton";
 
-export default function AVMPage({ onNav }: { onNav: (p: Page) => void }) {
+export default function AVMPage({ onNav, goBack }: { onNav: (p: Page) => void; goBack: () => void }) {
   const [district, setDistrict] = useState("Chilonzor");
   const [area, setArea] = useState(60);
   const [rooms, setRooms] = useState(2);
@@ -50,6 +51,7 @@ export default function AVMPage({ onNav }: { onNav: (p: Page) => void }) {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
+          <BackButton onClick={goBack} />
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
             <Cpu size={20} className="text-white" />
